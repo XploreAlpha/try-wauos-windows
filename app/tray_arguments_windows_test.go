@@ -8,7 +8,7 @@ import (
 )
 
 func TestTraySettingsRetainRuntimeChoice(t *testing.T) {
-	cfg := trayLaunchConfig{dataDir: `D:\Omarchy 世界`, winqEmu: `D:\Audio runtime`}
+	cfg := trayLaunchConfig{dataDir: `D:\Wau 世界`, winqEmu: `D:\Audio runtime`}
 	want := []string{"-dir", cfg.dataDir, "-winq", cfg.winqEmu, "-settings"}
 	if got := trayControlArguments(cfg, "-settings"); !reflect.DeepEqual(got, want) {
 		t.Fatalf("%q want %q", got, want)

@@ -17,7 +17,7 @@ func TestPlatformQMPControlDirectoryUsesWindowsTemp(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if filepath.Base(got) != "TryOmarchyIPC" {
+	if filepath.Base(got) != "TryWauIPC" {
 		t.Fatalf("control directory = %q", got)
 	}
 	baseInfo, err := os.Stat(base)

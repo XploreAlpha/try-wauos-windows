@@ -163,7 +163,7 @@ func activateMovedInstallation(m *installationMove) error {
 	if err != nil {
 		return err
 	}
-	paths = append(paths, filepath.Join(m.Destination, "Start Omarchy.lnk"), filepath.Join(m.Destination, "Settings.lnk"))
+	paths = append(paths, filepath.Join(m.Destination, "Start Wau.lnk"), filepath.Join(m.Destination, "Settings.lnk"))
 	prefs, err := loadLaunchPreferences(m.Destination)
 	if err != nil {
 		return err
@@ -277,7 +277,7 @@ func runMoveUI(dir string, cleanup bool) error {
 	getUI().finishOnly.Store(true)
 	getUI().setStatus("%s", uiText("move.status.finishing"))
 	if err := s.recover(activateMovedInstallation); err != nil {
-		return fmt.Errorf("the verified copy is safe; open Try Omarchy again to finish switching locations: %w", err)
+		return fmt.Errorf("the verified copy is safe; open Try Wau again to finish switching locations: %w", err)
 	}
 	uiDone()
 	infoBox(uiTextWith("move.done", map[string]string{"moved": m.Destination, "original": m.Source}))

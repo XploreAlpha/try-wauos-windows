@@ -78,7 +78,7 @@ func TestCreatePortableCopyRoundTrip(t *testing.T) {
 	if !bytes.Equal(got[:len(before)], before) || !zeroBytes(got[len(before):]) {
 		t.Fatal("portable copy lost user data")
 	}
-	for _, name := range []string{"Start Omarchy.cmd", "Settings.cmd", "TryOmarchy.exe", "payload/SHA256SUMS"} {
+	for _, name := range []string{"Start Wau.cmd", "Settings.cmd", "TryOmarchy.exe", "payload/SHA256SUMS"} {
 		if _, err := os.Stat(filepath.Join(destination, name)); err != nil {
 			t.Fatal(err)
 		}

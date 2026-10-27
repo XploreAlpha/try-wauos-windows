@@ -165,7 +165,7 @@ func urlSchemeFootprint(key syscall.Handle, scheme string) (ok bool, command str
 		return false, "", false, err
 	}
 	present := uint32(0)
-	for _, want := range [][2]string{{"", "URL:" + scheme + " (Try Omarchy)"}, {"URL Protocol", ""}} {
+	for _, want := range [][2]string{{"", "URL:" + scheme + " (Try Wau)"}, {"URL Protocol", ""}} {
 		value, found, err := readRegistryString(key, want[0])
 		if errors.Is(err, errRegistryValueType) {
 			return false, "", false, nil
@@ -319,7 +319,7 @@ func writeURLSchemeKey(scheme, target, dir string, accept func(urlSchemeRegistra
 	if err != nil {
 		return err
 	}
-	for _, value := range [][2]string{{"", "URL:" + scheme + " (Try Omarchy)"}, {"URL Protocol", ""}} {
+	for _, value := range [][2]string{{"", "URL:" + scheme + " (Try Wau)"}, {"URL Protocol", ""}} {
 		if err := regSetString(key, value[0], value[1]); err != nil {
 			return err
 		}

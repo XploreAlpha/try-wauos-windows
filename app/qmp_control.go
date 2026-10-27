@@ -86,7 +86,7 @@ func prepareQMPControl() (string, error) {
 		conn, err := net.DialTimeout("unix", path, 300*time.Millisecond)
 		if err == nil {
 			conn.Close()
-			return "", fmt.Errorf("an Omarchy runtime still owns its private control socket")
+			return "", fmt.Errorf("an Wau runtime still owns its private control socket")
 		}
 		if !qmpConnectionRefused(err) && !os.IsNotExist(err) {
 			return "", fmt.Errorf("cannot inspect the existing private control socket: %w", err)

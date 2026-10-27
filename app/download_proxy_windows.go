@@ -114,7 +114,7 @@ func windowsProxyForConfig(target *url.URL, cfg *ieProxyConfig) (*url.URL, error
 	if cfg.autoURL == nil && cfg.autoDetect == 0 {
 		return systemProxyURL(target, proxyString(cfg.proxy), proxyString(cfg.bypass))
 	}
-	agent, _ := syscall.UTF16PtrFromString("Try Omarchy updater")
+	agent, _ := syscall.UTF16PtrFromString("Try Wau updater")
 	session, _, err := procWinHTTPOpen.Call(uintptr(unsafe.Pointer(agent)), 1, 0, 0, 0)
 	if session == 0 {
 		return nil, fmt.Errorf("opening Windows proxy session: %w", err)

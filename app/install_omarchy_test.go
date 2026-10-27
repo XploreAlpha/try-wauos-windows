@@ -101,7 +101,7 @@ func TestInstallReadyGoesStraightToTheSteps(t *testing.T) {
 		t.Fatalf("unexpected readiness %+v", r)
 	}
 	body, buttons := installPage(r)
-	for _, want := range []string{"Next, install Omarchy", "Shrink C:", "200.0 GiB free", importCommand, "Keep Try Omarchy installed"} {
+	for _, want := range []string{"Next, install Wau", "Shrink C:", "200.0 GiB free", importCommand, "Keep Try Wau installed"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("steps lack %q:\n%s", want, body)
 		}
@@ -116,7 +116,7 @@ func TestInstallListsOnlyWhatIsLeft(t *testing.T) {
 		bitLocker: map[string]bitLockerState{"C:": bitLockerOn}}
 	r := assessInstallReadiness(installDir(t, "disk.raw"), f.probes())
 	body, buttons := installPage(r)
-	for _, want := range []string{"Shut down Omarchy", "Turn off Fast Startup", "Turn off BitLocker on C:"} {
+	for _, want := range []string{"Shut down Wau", "Turn off Fast Startup", "Turn off BitLocker on C:"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("list lacks %q:\n%s", want, body)
 		}
@@ -130,7 +130,7 @@ func TestInstallListsOnlyWhatIsLeft(t *testing.T) {
 
 	f.locked = false
 	body, buttons = installPage(assessInstallReadiness(installDir(t, "disk.raw"), f.probes()))
-	if strings.Contains(body, "Omarchy.") || !sameActions(buttons, installFastStartup, installBitLocker, installRecheck, installDone) {
+	if strings.Contains(body, "Wau.") || !sameActions(buttons, installFastStartup, installBitLocker, installRecheck, installDone) {
 		t.Fatalf("buttons = %v:\n%s", buttonActions(buttons), body)
 	}
 }

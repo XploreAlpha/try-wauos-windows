@@ -62,7 +62,7 @@ func validUninstallStateAt(dir, expected string) bool {
 	return json.Unmarshal(data, &state) == nil && state.Version == 1 && filepath.IsAbs(state.Directory) && filepath.Clean(state.Directory) == state.Directory && pathsEqual(state.Directory, expected)
 }
 
-// uninstallMarkers are files that only a Try Omarchy data folder holds. The
+// uninstallMarkers are files that only a Try Wau data folder holds. The
 // Apps & features entry is written after the guest and disk are complete, so
 // a real installation has several of them.
 var uninstallMarkers = []string{
@@ -78,7 +78,7 @@ func uninstallPathError(err error) error {
 }
 
 // validateUninstallDirectory refuses to delete a folder that is not a Try
-// Omarchy data folder. Uninstall removes the whole folder, and -dir is
+// Wau data folder. Uninstall removes the whole folder, and -dir is
 // taken from the command line, so a mistyped or crafted path must not
 // delete a drive or someone's documents.
 func validateUninstallDirectory(dir string) error {
@@ -107,7 +107,7 @@ func validateUninstallDirectory(dir string) error {
 	if validUninstallState(dir) {
 		return nil
 	}
-	return fmt.Errorf("%s is not a Try Omarchy data folder; nothing was removed", dir)
+	return fmt.Errorf("%s is not a Try Wau data folder; nothing was removed", dir)
 }
 
 // Keep a removal receipt until the directory is gone. A partial deletion may

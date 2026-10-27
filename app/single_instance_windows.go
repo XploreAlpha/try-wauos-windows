@@ -7,9 +7,9 @@ import (
 	"unsafe"
 )
 
-// Starting Try Omarchy again while it runs (the Start menu shortcut, a second
+// Starting Try Wau again while it runs (the Start menu shortcut, a second
 // double-click) brings the running window to the front. It used to stop with
-// "Try Omarchy looks like it's already running (port 4450 is in use)".
+// "Try Wau looks like it's already running (port 4450 is in use)".
 
 var (
 	procIsIconic            = user32.NewProc("IsIconic")
@@ -36,7 +36,7 @@ func runningInstanceProc(hwnd, _ uintptr) uintptr {
 	return 1
 }
 
-// activateRunningInstance brings a running Try Omarchy to the front and
+// activateRunningInstance brings a running Try Wau to the front and
 // reports whether it found one.
 func activateRunningInstance() bool {
 	runningInstanceWindow = 0

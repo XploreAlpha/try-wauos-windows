@@ -26,7 +26,7 @@ func signInShortcutPath(dir string) (string, error) {
 		return "", fmt.Errorf("Windows returned an empty Startup folder")
 	}
 	name := strings.TrimPrefix(uninstallKeyName(dir, defaultDataDirectory()), "TryOmarchy")
-	return filepath.Join(folder, "Try Omarchy"+name+".lnk"), nil
+	return filepath.Join(folder, "Try Wau"+name+".lnk"), nil
 }
 
 func syncSignInShortcut(target, dir string, enabled bool) error {

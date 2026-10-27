@@ -169,9 +169,9 @@ func TestNativeUSBSelectionConfirmDisableAndClose(t *testing.T) {
 	for _, reply := range []uintptr{idNo, idYes} {
 		procPostMessageW.Call(h, wmCommand, 4302, 0)
 		var confirmation uintptr
-		wait(func() bool { confirmation = find("#32770", "Try Omarchy"); return confirmation != 0 })
+		wait(func() bool { confirmation = find("#32770", "Try Wau"); return confirmation != 0 })
 		procPostMessageW.Call(confirmation, wmCommand, reply, 0)
-		wait(func() bool { return find("#32770", "Try Omarchy") == 0 })
+		wait(func() bool { return find("#32770", "Try Wau") == 0 })
 		if reply == idNo {
 			if _, err := os.Stat(filepath.Join(dir, usbPreferencesFilename)); !os.IsNotExist(err) {
 				t.Fatal("declining granted startup USB access", err)

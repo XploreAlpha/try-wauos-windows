@@ -20,7 +20,7 @@ const fastStartupKey = `SYSTEM\CurrentControlSet\Control\Session Manager\Power`
 var propsys = syscall.NewLazyDLL(system32("propsys.dll"))
 
 func diskLocked(path string) bool {
-	// The launcher opens the disk without sharing, so a running Omarchy
+	// The launcher opens the disk without sharing, so a running Wau
 	// makes this fail the same way Back up does.
 	file, err := openBackupDisk(path)
 	if err != nil {
@@ -101,9 +101,9 @@ func openBitLockerSettings() {
 	openWindowsURL("ms-settings:deviceencryption")
 }
 
-// requestOmarchyShutdown asks the running Omarchy to shut down the way the
+// requestWauShutdown asks the running Wau to shut down the way the
 // window's close button does, then waits a little for it to finish.
-func requestOmarchyShutdown(dir string) error {
+func requestWauShutdown(dir string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 	defer cancel()
 	c, err := dialQMPControl(ctx, qmpToolsPort)
@@ -203,10 +203,10 @@ func chooseInstallAction(title, body string, buttons []installButton) (int, erro
 	return chooseActionWithTextHeight(title, body, textHeight, installButtonLabels(buttons)...)
 }
 
-// runInstallOmarchyUI walks through getting ready to install Omarchy next to
+// runInstallWauUI walks through getting ready to install Wau next to
 // Windows. Each pass shows only what is left to do, and the install steps
 // once nothing is.
-func runInstallOmarchyUI(dir string) error {
+func runInstallWauUI(dir string) error {
 	shutdownRequested := false
 	for {
 		r := assessInstallReadiness(dir, windowsInstallProbes())
@@ -218,7 +218,7 @@ func runInstallOmarchyUI(dir string) error {
 		}
 		switch buttons[choice-1].action {
 		case installShutDown:
-			if err := requestOmarchyShutdown(dir); err != nil {
+			if err := requestWauShutdown(dir); err != nil {
 				errorBox(uiTextWith("install.error.shutdown", map[string]string{"error": err.Error()}))
 			} else {
 				shutdownRequested = true

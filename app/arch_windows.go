@@ -39,7 +39,7 @@ func nativeMachine() uint16 {
 	return native
 }
 
-// hostArchUnsupportedReason returns "" when this machine can run Try Omarchy,
+// hostArchUnsupportedReason returns "" when this machine can run Try Wau,
 // otherwise the message to show the user. The launcher, the WINQ-EMU runtime
 // and the guest image are all x86_64-only, so ARM64 Windows PCs cannot run
 // the app - and before this check they got the worst possible tour: an

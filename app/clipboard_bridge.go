@@ -42,7 +42,7 @@ type clipBridge struct {
 	sequence     func() uint32
 	lastSequence uint32
 	// The Windows clipboard sequence when the guest connected. Files copied
-	// before Omarchy started may have moved or been deleted since; failing
+	// before Wau started may have moved or been deleted since; failing
 	// to offer those is not worth an error the user never asked for.
 	connectSequence      uint32
 	connectSequenceKnown bool

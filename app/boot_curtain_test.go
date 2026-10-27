@@ -141,7 +141,7 @@ func TestFramePaintedRejectsShortBuffers(t *testing.T) {
 func TestBlankDesktopDue(t *testing.T) {
 	start := time.Unix(1000, 0)
 	if (bootCurtainTimes{}).blankDesktopDue(start.Add(time.Hour), blankDesktopLooks) {
-		t.Fatal("asked before Omarchy reported ready")
+		t.Fatal("asked before Wau reported ready")
 	}
 	ready := bootCurtainTimes{boot: start, ready: start}
 	if ready.blankDesktopDue(start.Add(blankDesktopWait-time.Second), blankDesktopLooks) {

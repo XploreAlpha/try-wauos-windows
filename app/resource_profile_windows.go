@@ -37,7 +37,7 @@ func measureHostResources(sampleCPU bool) hostResources {
 	return h
 }
 
-// runningGuestMiB is the memory a running Omarchy holds, found through its
+// runningGuestMiB is the memory a running Wau holds, found through its
 // window, or 0 when it is not running. Settings opened from the tray counts
 // it as available: the next boot starts after this one has shut down.
 func runningGuestMiB() int {

@@ -1,7 +1,6 @@
 // Windows resources for TryOmarchy.exe: the app icon and the version block that
 // Explorer, Task Manager and the UAC consent prompt read.
-// icon.ico is rendered from OmarchyIcon.svg, which preserves the official mark
-// from https://omarchy.org/brand/ inside the project's existing app-icon tile.
+// icon.ico is rendered from WauIcon.svg by scripts/branding/build-icon.mjs.
 //
 // Regenerate the committed object after editing this file (needs llvm-rc and
 // llvm-cvtres from the LLVM toolchain):
@@ -30,12 +29,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Omacom"
-            VALUE "FileDescription", "Try Omarchy"
+            VALUE "FileDescription", "Try Wau"
             VALUE "FileVersion", "v0.13.0"
             VALUE "InternalName", "TryOmarchy"
             VALUE "LegalCopyright", "Copyright (c) 2026 Try Omarchy contributors"
             VALUE "OriginalFilename", "TryOmarchy.exe"
-            VALUE "ProductName", "Try Omarchy"
+            VALUE "ProductName", "Try Wau"
             VALUE "ProductVersion", "v0.13.0"
         END
     END

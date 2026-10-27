@@ -37,7 +37,7 @@ func performDropDrag(id string, x, y int) error {
 		return err
 	}
 	if pid := qemuPid.Load(); pid == 0 || !guestUp.Load() || foregroundPid() != pid {
-		return errors.New("the Omarchy window is not in front")
+		return errors.New("the Wau window is not in front")
 	}
 	if cursorMoved(drop.cursor, cursorPosition()) {
 		return errors.New("the pointer moved after the drop")

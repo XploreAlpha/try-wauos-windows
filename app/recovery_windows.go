@@ -13,7 +13,7 @@ import (
 
 func chooseBackupDestination() (string, bool, error) {
 	for {
-		name, ok, err := chooseRecoveryPath(0, uiText("recovery.backup.choose"), "Omarchy-"+time.Now().Format("2006-01-02-150405")+".zip", true, false)
+		name, ok, err := chooseRecoveryPath(0, uiText("recovery.backup.choose"), "Wau-"+time.Now().Format("2006-01-02-150405")+".zip", true, false)
 		if err != nil || !ok {
 			return "", ok, err
 		}
@@ -45,7 +45,7 @@ func runRecoveryUI(dir, action string) error {
 		if err != nil {
 			return err
 		}
-		destination := filepath.Join(parent, "OmarchyPortable-"+time.Now().Format("20060102-150405"))
+		destination := filepath.Join(parent, "WauPortable-"+time.Now().Format("20060102-150405"))
 		beginRecoveryProgress(uiText("recovery.portable.status"))
 		err = createPortableCopy(dir, destination, self, recoveryProgress(recoveryCopying))
 		uiDone()
@@ -78,7 +78,7 @@ func runRecoveryUI(dir, action string) error {
 		if err != nil || !ok {
 			return err
 		}
-		destination := filepath.Join(parent, "OmarchyRestored-"+time.Now().Format("2006-01-02-150405"))
+		destination := filepath.Join(parent, "WauRestored-"+time.Now().Format("2006-01-02-150405"))
 		if msgBox(uiTextWith("recovery.restore.confirm", map[string]string{"path": destination}), mbYesNo|mbIconQuestion|mbDefbutton2) != idYes {
 			return nil
 		}
@@ -103,7 +103,7 @@ func runRecoveryUI(dir, action string) error {
 	case "uninstall":
 		return runUninstall(dir)
 	case "install-omarchy":
-		return runInstallOmarchyUI(dir)
+		return runInstallWauUI(dir)
 	default:
 		return fmt.Errorf("unknown recovery action")
 	}
@@ -191,7 +191,7 @@ func createRestoredLaunchers(dir string) error {
 		}
 	}
 	for _, item := range []struct{ name, arguments string }{
-		{"Start Omarchy.lnk", launchShortcutArguments(dir, prefs.StartAutomatically)},
+		{"Start Wau.lnk", launchShortcutArguments(dir, prefs.StartAutomatically)},
 		{"Settings.lnk", settingsShortcutArguments(dir)},
 	} {
 		path := filepath.Join(dir, item.name)
@@ -269,7 +269,7 @@ func createRollbackRecoveryLaunchers(dir, sourceInstallation string) error {
 	if err != nil {
 		return err
 	}
-	for _, name := range []string{"Start Omarchy.cmd", "Settings.cmd"} {
+	for _, name := range []string{"Start Wau.cmd", "Settings.cmd"} {
 		args := append([]string(nil), arguments...)
 		if name == "Settings.cmd" {
 			args = append(args, "-settings")

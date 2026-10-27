@@ -15,7 +15,7 @@ import (
 	"unicode/utf8"
 )
 
-// Links clicked in Windows can open in Omarchy for the link types (URL
+// Links clicked in Windows can open in Wau for the link types (URL
 // schemes) the user allows in Settings. The guest reports which schemes its
 // apps handle, Windows hands a link of an allowed scheme to the launcher, and
 // the guest checks it again before xdg-open. See docs/WINDOWS-LINK-BRIDGE.md.

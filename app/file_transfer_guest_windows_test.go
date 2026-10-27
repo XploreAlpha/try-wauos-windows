@@ -23,7 +23,7 @@ func TestGuestDesktopFileTransferRoundTrip(t *testing.T) {
 		t.Fatal("cannot initialize test clipboard")
 	}
 	sequence := clipboardSequence()
-	payload := bytes.Repeat([]byte("Try Omarchy verified file drop\n"), 1<<20)
+	payload := bytes.Repeat([]byte("Try Wau verified file drop\n"), 1<<20)
 	source := filepath.Join(t.TempDir(), "from-windows-世界.txt")
 	if err := os.WriteFile(source, payload, 0600); err != nil {
 		t.Fatal(err)

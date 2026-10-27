@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-// Reclaiming Windows disk space. Deleting files inside Omarchy never shrinks
+// Reclaiming Windows disk space. Deleting files inside Wau never shrinks
 // disk.raw: ext4 does not zero freed blocks and QEMU's Windows backend has no
 // discard path, so the sparse file only grows. Reclaim works in two steps:
 // the guest agent zero-fills its free space on request, and once the guest

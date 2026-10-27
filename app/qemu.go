@@ -115,7 +115,7 @@ func buildQemuArgs(cfg *config, cmdline string) []string {
 		// attach to this controller after the guest has started.
 		"-device", "qemu-xhci,id="+usbControllerID,
 		// The guest must not sleep: a suspended VM leaves the window frozen
-		// with no way back from the keyboard, and Omarchy's power menu
+		// with no way back from the keyboard, and Wau's power menu
 		// offers suspend whenever the kernel advertises it. With S3 and S4
 		// off the kernel reports no such state and systemd refuses cleanly.
 		"-global", "ICH9-LPC.disable_s3=1", "-global", "ICH9-LPC.disable_s4=1",

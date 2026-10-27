@@ -119,7 +119,7 @@ func TestPortableFirewallInventoryRefusesUnsafeFiles(t *testing.T) {
 			case "directory":
 				os.Mkdir(path, 0700)
 			case "wrong-name":
-				path = filepath.Join(root, "TryOmarchy-wrong.json")
+				path = filepath.Join(root, "TryWau-wrong.json")
 			case "symlink":
 				target := filepath.Join(t.TempDir(), "owner")
 				os.WriteFile(target, data, 0600)

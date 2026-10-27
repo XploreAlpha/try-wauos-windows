@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // This inventory stays on the Windows host, not on the removable drive.
@@ -199,7 +198,8 @@ func portableFirewallOwnerStale(owner portableFirewallOwner) (bool, error) {
 	}
 	// This identity survives runtime updates, unlike a runtime receipt, and
 	// distinguishes a different installation reusing the same drive and path.
-	return id != strings.TrimPrefix(owner.Plan.Group, "TryOmarchy-"), nil
+	groupID, _ := lanFirewallGroupID(owner.Plan.Group)
+	return id != groupID, nil
 }
 
 func ensureLANFirewallAfterCleanup(cleanup func() error, notice func(error), ensure func() error) error {

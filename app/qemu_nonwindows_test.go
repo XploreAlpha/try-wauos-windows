@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	appTitle = "Try Omarchy"
+	appTitle = "Try Wau"
 )
 
 type config struct {

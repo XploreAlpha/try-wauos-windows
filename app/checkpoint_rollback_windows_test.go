@@ -31,7 +31,7 @@ func TestCheckpointRecoveryPortableLaunchers(t *testing.T) {
 	if err := createRollbackRecoveryLaunchers(dir, filepath.Join(filepath.Dir(payload), "data")); err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"Start Omarchy.cmd", "Settings.cmd"} {
+	for _, name := range []string{"Start Wau.cmd", "Settings.cmd"} {
 		data, err := os.ReadFile(filepath.Join(root, name))
 		if err != nil || !strings.Contains(string(data), `"%~dp0TryOmarchy.exe" "-portable" "-no-update"`) {
 			t.Fatalf("%s: %s %v", name, data, err)

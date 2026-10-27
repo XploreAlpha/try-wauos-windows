@@ -26,7 +26,7 @@ func TestRestoredShortcutsTargetOnlyRestoredFolder(t *testing.T) {
 		t.Fatalf("restored sign-in preference = %#v, error %v", prefs, err)
 	}
 	var links []struct{ Name, Target, Arguments, Directory string }
-	for _, name := range []string{"Start Omarchy.lnk", "Settings.lnk"} {
+	for _, name := range []string{"Start Wau.lnk", "Settings.lnk"} {
 		target, arguments, directory := readShellLinkForTest(t, filepath.Join(dir, name))
 		links = append(links, struct{ Name, Target, Arguments, Directory string }{name, target, arguments, directory})
 	}
@@ -53,7 +53,7 @@ func TestRestoredShortcutsTargetOnlyRestoredFolder(t *testing.T) {
 		wantArgs := `-dir "` + dir + `"`
 		if link.Name == "Settings.lnk" {
 			wantArgs += " -settings"
-		} else if link.Name != "Start Omarchy.lnk" {
+		} else if link.Name != "Start Wau.lnk" {
 			t.Fatalf("unexpected shortcut %q", link.Name)
 		}
 		if link.Arguments != wantArgs {

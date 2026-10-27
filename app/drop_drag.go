@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// Delivering a Windows file drop to the Omarchy app under the pointer. The
+// Delivering a Windows file drop to the Wau app under the pointer. The
 // guest receives the files, then shows a small drag source next to the drop
 // point and asks for "drop-drag ID X Y" over the agent port, naming the drop
 // by its transfer ticket ID and giving that source's position in absolute
@@ -16,7 +16,7 @@ import (
 // pressing on the source and dragging to the recorded drop point through the
 // guest's virtual tablet, so the app gets an ordinary Wayland drop. It does
 // that at most once per drop, only soon after it, and only if the Windows
-// pointer has not moved and the Omarchy window is still in front; otherwise
+// pointer has not moved and the Wau window is still in front; otherwise
 // the files stay in Downloads.
 
 const (

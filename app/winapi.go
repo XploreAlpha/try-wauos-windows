@@ -176,7 +176,7 @@ func screenSize(fullscreen bool) (int, int) {
 }
 
 // foregroundPid is the process of the foreground window. A guest window that
-// is still invisible while Omarchy boots does not count as the VM having focus.
+// is still invisible while Wau boots does not count as the VM having focus.
 func foregroundPid() uint32 {
 	if curtainUp.Load() {
 		return 0

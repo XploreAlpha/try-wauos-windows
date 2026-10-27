@@ -22,7 +22,7 @@ func TestNativeInstallWalkthroughDuringActiveLifecycle(t *testing.T) {
 	}
 	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", lifecyclePort))
 	if err != nil {
-		t.Skip("requires an otherwise idle Try Omarchy lifecycle port")
+		t.Skip("requires an otherwise idle Try Wau lifecycle port")
 	}
 	defer listener.Close()
 	dir := t.TempDir()
@@ -44,7 +44,7 @@ func TestNativeInstallWalkthroughDuringActiveLifecycle(t *testing.T) {
 	}
 	defer func() { _ = cmd.Process.Kill(); _ = cmd.Wait() }()
 	class, _ := syscall.UTF16PtrFromString("TryOmarchyChoice")
-	title, _ := syscall.UTF16PtrFromString("Install Omarchy on this PC")
+	title, _ := syscall.UTF16PtrFromString("Install Wau on this PC")
 	for deadline := time.Now().Add(10 * time.Second); time.Now().Before(deadline); {
 		window, _, _ := user32.NewProc("FindWindowW").Call(uintptr(unsafe.Pointer(class)), uintptr(unsafe.Pointer(title)))
 		var owner uint32

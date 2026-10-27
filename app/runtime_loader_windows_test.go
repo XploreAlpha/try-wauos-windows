@@ -9,7 +9,7 @@ import (
 )
 
 func TestRuntimeLoaderCommandUsesExactExecutableAndHiddenVersionProbe(t *testing.T) {
-	executable := `C:\Try Omarchy\data\runtime\bin\qemu-system-x86_64w.exe`
+	executable := `C:\Try Wau\data\runtime\bin\qemu-system-x86_64w.exe`
 	cmd := runtimeLoaderCommand(context.Background(), executable)
 	if cmd.Path != executable || !reflect.DeepEqual(cmd.Args, []string{executable, "--version"}) {
 		t.Fatalf("path=%q args=%q", cmd.Path, cmd.Args)

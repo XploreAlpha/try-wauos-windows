@@ -11,7 +11,7 @@ type forwardedKey struct {
 }
 
 // Windows consumes Alt+Tab before SDL can deliver the chord to the guest, so
-// the hook forwards Tab itself while Omarchy is focused. It also presses Alt
+// the hook forwards Tab itself while Wau is focused. It also presses Alt
 // once in case SDL never delivered it. That Alt stays down across repeated Tab
 // taps and is released with the physical Alt, so a guest switcher that stays
 // open while Alt is held can keep cycling.
@@ -20,7 +20,7 @@ type altTabForwarder struct {
 }
 
 // tab returns the guest keys for a Tab change and whether the host should
-// swallow it. When forward is false, focus has left Omarchy, so anything
+// swallow it. When forward is false, focus has left Wau, so anything
 // still held in the guest is released and Tab goes to Windows.
 func (f *altTabForwarder) tab(forward, down bool) (keys []forwardedKey, swallow bool) {
 	if forward && down {
@@ -54,7 +54,7 @@ func (f *altTabForwarder) altReleased() []forwardedKey {
 }
 
 // Windows reserves Ctrl+Alt+Delete for its security screen before any hook
-// sees it, so Ctrl+Alt+End stands in for it while Omarchy is focused, as in
+// sees it, so Ctrl+Alt+End stands in for it while Wau is focused, as in
 // Hyper-V. The guest receives one complete Ctrl+Alt+Delete press and release
 // when End goes down, so a lost End release can never leave keys held there.
 type ctrlAltEndAction int
@@ -77,7 +77,7 @@ func classifyCtrlAltEnd(focused, ctrl, alt, rightAlt, sent, down bool) ctrlAltEn
 	return ctrlAltEndPass
 }
 
-// Win and Print Screen go to the guest while Omarchy is focused and to
+// Win and Print Screen go to the guest while Wau is focused and to
 // Windows otherwise. Focus can change while one is held (Win+1 on the taskbar
 // focuses the VM before Win comes up), so each press belongs to the side that
 // saw it go down until it comes back up. A release sent to the wrong side

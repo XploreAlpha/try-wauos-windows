@@ -39,7 +39,7 @@ type renderProbe struct {
 	DisplayDriver string    `json:"displayDriver"`
 	RecordedAt    time.Time `json:"recordedAt"`
 	// DesktopSeen is true when a GPU result was recorded only after the
-	// Omarchy window showed the desktop. Older launchers recorded GPU as soon
+	// Wau window showed the desktop. Older launchers recorded GPU as soon
 	// as the guest reached userspace, even if Windows never drew it (#358).
 	DesktopSeen bool `json:"desktopSeen,omitempty"`
 }

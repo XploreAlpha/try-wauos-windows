@@ -24,7 +24,7 @@ func clipboardFilesCache() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(dir, "TryOmarchy", "Clipboard"), nil
+	return filepath.Join(dir, "TryWau", "Clipboard"), nil
 }
 
 func clipboardGetFilePaths() ([]string, bool) {

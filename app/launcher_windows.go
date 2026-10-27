@@ -133,7 +133,7 @@ func writeLauncherShortcuts(paths []string, target, dir string, startMenu, deskt
 // Put launchers beside its own data instead, and keep both links together.
 func writeFolderLaunchers(target, dir string, startAutomatically bool) error {
 	items := []struct{ path, arguments string }{
-		{filepath.Join(dir, "Start Omarchy.lnk"), launchShortcutArguments(dir, startAutomatically)},
+		{filepath.Join(dir, "Start Wau.lnk"), launchShortcutArguments(dir, startAutomatically)},
 		{filepath.Join(dir, "Settings.lnk"), settingsShortcutArguments(dir)},
 	}
 	for _, item := range items {
@@ -188,7 +188,7 @@ func finishLauncherShortcutChoice(paths []string, target, dir string, startMenu,
 }
 
 // shortcutOwnedError is a Start menu or desktop shortcut that already starts
-// another Try Omarchy installation.
+// another Try Wau installation.
 type shortcutOwnedError struct{ desktop bool }
 
 func (e shortcutOwnedError) place() string {
@@ -207,7 +207,7 @@ func updateLaunchShortcuts(target, dir string, startAutomatically bool) error {
 	if err != nil {
 		return err
 	}
-	paths = []string{paths[0], paths[2], filepath.Join(dir, "Start Omarchy.lnk")}
+	paths = []string{paths[0], paths[2], filepath.Join(dir, "Start Wau.lnk")}
 	return changeOwnedShortcuts(paths, []string{target}, func(path, _ string) error {
 		return writeShellLink(path, target, launchShortcutArguments(dir, startAutomatically), dir)
 	})

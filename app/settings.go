@@ -30,7 +30,7 @@ type settings struct {
 	// Guest CPUs. 0 sizes them to the machine automatically.
 	CPUs     int `json:"cpus,omitempty"`
 	Displays int `json:"displays,omitempty"`
-	// Windows folder shared into Omarchy. Empty means no share.
+	// Windows folder shared into Wau. Empty means no share.
 	Share string `json:"share"`
 	// ShareDisabled remembers a chosen folder while preventing it from being
 	// exported. The zero value keeps older settings with a share enabled.
@@ -42,7 +42,7 @@ type settings struct {
 	Forwards        []string          `json:"forwards"`
 	LANPublic       bool              `json:"lanPublic,omitempty"`
 	ForwardAdapters map[string]string `json:"forwardAdapters,omitempty"`
-	// Public key file authorized for the Omarchy account when a forward
+	// Public key file authorized for the Wau account when a forward
 	// targets sshd. Empty picks the usual ~/.ssh/id_*.pub.
 	SSHKey string `json:"sshKey"`
 	// Render picks the rendering path: "auto" (or empty) tries the GPU path

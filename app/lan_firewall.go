@@ -13,6 +13,25 @@ import (
 
 const networkIdentityFilename = "network-identity"
 
+// The rule group is visible in the Windows Firewall rule list, so it carries
+// the current product name. Groups written by an earlier release keep the old
+// prefix and are still recognised, so their rules can be cleaned up.
+const (
+	lanFirewallGroupPrefix       = "TryWau-"
+	legacyLanFirewallGroupPrefix = "TryOmarchy-"
+)
+
+// lanFirewallGroupID returns the network identity encoded in a firewall rule
+// group.
+func lanFirewallGroupID(group string) (string, bool) {
+	for _, prefix := range []string{lanFirewallGroupPrefix, legacyLanFirewallGroupPrefix} {
+		if id, ok := strings.CutPrefix(group, prefix); ok && validCheckpointID(id) {
+			return id, true
+		}
+	}
+	return "", false
+}
+
 type lanFirewallRule struct {
 	Protocol string `json:"protocol"`
 	Address  string `json:"address"`
@@ -83,7 +102,7 @@ func makeLANFirewallPlan(dir, program string, public bool, forwards []portForwar
 	if id == "" {
 		return plan, nil
 	}
-	plan.Group = "TryOmarchy-" + id
+	plan.Group = lanFirewallGroupPrefix + id
 	data, err := json.Marshal(plan)
 	if err != nil {
 		return plan, err
@@ -94,7 +113,7 @@ func makeLANFirewallPlan(dir, program string, public bool, forwards []portForwar
 }
 
 func (p lanFirewallPlan) validate() error {
-	if !strings.HasPrefix(p.Group, "TryOmarchy-") || !validCheckpointID(strings.TrimPrefix(p.Group, "TryOmarchy-")) {
+	if _, ok := lanFirewallGroupID(p.Group); !ok {
 		return fmt.Errorf("invalid firewall ownership")
 	}
 	if len(p.Generation) != 16 {
@@ -131,7 +150,7 @@ const (
 // line, so without this check the helper would open inbound ports for any
 // program a caller named.
 func validateLANFirewallProgram(program string) error {
-	invalid := fmt.Errorf("firewall program must be Try Omarchy's QEMU")
+	invalid := fmt.Errorf("firewall program must be Try Wau's QEMU")
 	if !filepath.IsAbs(program) || filepath.Clean(program) != program || strings.HasPrefix(program, `\\`) {
 		return invalid
 	}

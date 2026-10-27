@@ -10,7 +10,7 @@ import (
 // Windows draws the frame around QEMU's SDL window, and it stays light unless
 // the window opts into dark mode. The title enforcer follows the user's app
 // theme (Settings > Personalization > Colors) so the title bar matches the
-// taskbar and the Omarchy desktop, including after a change while running.
+// taskbar and the Wau desktop, including after a change while running.
 const (
 	dwmwaUseImmersiveDarkMode = 20
 	swpNoZorder               = 0x0004

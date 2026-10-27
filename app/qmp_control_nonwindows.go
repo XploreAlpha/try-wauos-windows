@@ -14,7 +14,7 @@ func platformQMPControlDirectory() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(cache, "TryOmarchyIPC"), nil
+	return filepath.Join(cache, "TryWauIPC"), nil
 }
 
 func isQMPControlSocket(path string) bool {

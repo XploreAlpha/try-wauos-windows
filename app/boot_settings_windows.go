@@ -63,7 +63,7 @@ func applyBootSettings(cfg *config, plan *bootPlan, saved settings, resources re
 	}
 	if mode != renderCPU && !plan.gpuRuntime {
 		if mode != cfg.renderMode {
-			notes = append(notes, fmt.Sprintf("render %s needs the bundled runtime; it applies when Try Omarchy starts again", mode))
+			notes = append(notes, fmt.Sprintf("render %s needs the bundled runtime; it applies when Try Wau starts again", mode))
 		}
 		mode = cfg.renderMode
 	}
@@ -72,7 +72,7 @@ func applyBootSettings(cfg *config, plan *bootPlan, saved settings, resources re
 
 	if next.displays > 1 && !plan.multiDisplayRuntime {
 		if next.displays != cfg.displays {
-			notes = append(notes, fmt.Sprintf("%d displays need the bundled runtime; they apply when Try Omarchy starts again", next.displays))
+			notes = append(notes, fmt.Sprintf("%d displays need the bundled runtime; they apply when Try Wau starts again", next.displays))
 		}
 	} else {
 		cfg.displays = next.displays

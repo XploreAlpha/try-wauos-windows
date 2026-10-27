@@ -98,7 +98,7 @@ func validateStandardDataDrive(path string) error {
 
 // chooseFirstRunDataDirectory asks once, before any payload is downloaded.
 // The folder picker selects a drive or parent folder and the launcher keeps
-// its files together in a TryOmarchy child directory.
+// its files together in a TryWau child directory.
 func chooseFirstRunDataDirectory(defaultDir string) (string, bool, error) {
 	for {
 		answer, err := chooseAction(uiText("location.title"),

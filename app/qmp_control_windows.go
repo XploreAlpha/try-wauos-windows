@@ -15,7 +15,7 @@ func platformQMPControlDirectory() (string, error) {
 	// hosts. The per-user Windows temporary directory does not have that
 	// limitation and keeps the control sockets outside guest-accessible TCP.
 	base := os.TempDir()
-	if len([]byte(filepath.Join(base, "TryOmarchyIPC", "supervisor.sock"))) > 103 {
+	if len([]byte(filepath.Join(base, "TryWauIPC", "supervisor.sock"))) > 103 {
 		name, err := syscall.UTF16PtrFromString(base)
 		if err != nil {
 			return "", err
@@ -25,7 +25,7 @@ func platformQMPControlDirectory() (string, error) {
 			base = syscall.UTF16ToString(buffer[:n])
 		}
 	}
-	return filepath.Join(base, "TryOmarchyIPC"), nil
+	return filepath.Join(base, "TryWauIPC"), nil
 }
 
 func isQMPControlSocket(path string) bool {

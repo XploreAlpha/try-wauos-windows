@@ -11,7 +11,7 @@ import (
 	"unsafe"
 )
 
-// The first-run splash: a borderless dark panel in the Omarchy look - the app
+// The first-run splash: a borderless dark panel in the Wau look - the app
 // icon, the wordmark, a live status line and a slim green progress bar. The
 // download goroutine writes atomics; a WM_TIMER repaints from them. Esc or
 // closing cancels the setup (nothing else is running at that point). Drag
@@ -87,7 +87,7 @@ const (
 	imageIcon         = 1
 	diNormal          = 0x0003
 
-	// The Omarchy look (Tokyo Night-ish, matching the boot splash). COLORREF
+	// The Wau look (Tokyo Night-ish, matching the boot splash). COLORREF
 	// is 0x00BBGGRR.
 	colBg    = 0x00261B1A // RGB(26,27,38)
 	colBgBar = 0x003C2A28 // RGB(40,42,60)
@@ -131,7 +131,7 @@ type progressUI struct {
 }
 
 // THE app has ONE splash (launch-UX requirement: it appears at launch and
-// stays visible until the Omarchy window itself is on screen - setup must
+// stays visible until the Wau window itself is on screen - setup must
 // never look like nothing is happening). The singleton is also what makes the
 // Win32 side correct: the window class registers once with one wndproc; with
 // per-phase windows, every window after the first ran the FIRST window's

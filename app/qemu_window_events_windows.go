@@ -12,7 +12,7 @@ import (
 // hook thread:
 //
 //   - Title changes. QEMU's SDL frontend rewrites the title whenever its
-//     keyboard grab or run state changes ("QEMU (Try Omarchy-0) - Press
+//     keyboard grab or run state changes ("QEMU (Try Wau-0) - Press
 //     Ctrl-Alt-G to exit grab", "... [Stopped]"), and the grab changes on every
 //     focus change. The right title goes back at once, and the display each
 //     renamed window shows is recorded so the title enforcer still recognises
@@ -20,7 +20,7 @@ import (
 //   - Shown, moved or resized. These wake the title enforcer, so a new window
 //     is placed right away instead of up to a second later, and a resize QEMU
 //     makes while the guest boots or shuts down is undone before it lingers.
-//     While Omarchy first boots, a window is made invisible as it is created,
+//     While Wau first boots, a window is made invisible as it is created,
 //     before SDL shows it (boot_curtain_windows.go).
 //   - The start and end of a move or resize the user makes with the mouse or
 //     the window menu. Those, and maximizing, are the only placements the

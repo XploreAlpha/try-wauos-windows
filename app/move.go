@@ -99,7 +99,7 @@ func (s moveStore) load() (moveState, error) {
 		}
 		if len(m.ID) != 32 || !filepath.IsAbs(m.Source) || !filepath.IsAbs(m.Destination) ||
 			pathsOverlap(m.Source, m.Destination) ||
-			m.Stage != filepath.Join(filepath.Dir(m.Destination), ".TryOmarchy-move-"+m.ID) {
+			m.Stage != filepath.Join(filepath.Dir(m.Destination), ".TryWau-move-"+m.ID) {
 			return state, fmt.Errorf("invalid move history paths")
 		}
 		if _, err := hex.DecodeString(m.ID); err != nil {
@@ -306,7 +306,7 @@ func (s moveStore) relocate(state moveState, dir string, activate func(*installa
 	state.Locations[target] = location
 	if state.Retained != nil && pathsEqual(state.Retained.Destination, old) {
 		state.Retained.Destination = target
-		state.Retained.Stage = filepath.Join(filepath.Dir(target), ".TryOmarchy-move-"+state.Retained.ID)
+		state.Retained.Stage = filepath.Join(filepath.Dir(target), ".TryWau-move-"+state.Retained.ID)
 	}
 	return state, s.save(state)
 }
@@ -359,7 +359,7 @@ func (s moveStore) relocatePending(state moveState) error {
 	if !filepath.IsAbs(target) || pathsOverlap(m.Source, target) || pathsOverlap(s.dir, target) {
 		return fmt.Errorf("invalid relocated move path")
 	}
-	stage := filepath.Join(filepath.Dir(target), ".TryOmarchy-move-"+m.ID)
+	stage := filepath.Join(filepath.Dir(target), ".TryWau-move-"+m.ID)
 	if err := validateMovePath(stage); err != nil {
 		return err
 	}
@@ -645,7 +645,7 @@ func (s moveStore) prepare(source, destination string, report backupProgress) (*
 	if err != nil {
 		return nil, uiError(uiTextWith("error.move.identify_volume", map[string]string{"path": destination, "error": err.Error()}), err)
 	}
-	m.Stage = filepath.Join(filepath.Dir(destination), ".TryOmarchy-move-"+m.ID)
+	m.Stage = filepath.Join(filepath.Dir(destination), ".TryWau-move-"+m.ID)
 	selected, found, err := loadDataLocationPointer(s.defaultDir)
 	if err != nil {
 		return nil, err

@@ -26,7 +26,7 @@ import (
 //     and Windows then needs its one restart.
 //   - QEMU. A portable WINQ-EMU tree (the validated GPU stack, same bin/
 //     layout as C:\WINQ-EMU) is downloaded from the release into
-//     %LOCALAPPDATA%\TryOmarchy\runtime, SHA256-verified like the image.
+//     %LOCALAPPDATA%\TryWau\runtime, SHA256-verified like the image.
 //     Existing installs (C:\WINQ-EMU, stock QEMU from the old bootstrap)
 //     still win, so nothing already set up changes behavior.
 

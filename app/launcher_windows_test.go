@@ -14,8 +14,8 @@ func TestSettingsShortcutArguments(t *testing.T) {
 	if got := settingsShortcutArguments(defaultDir); got != "-settings" {
 		t.Fatalf("default settings shortcut arguments = %q", got)
 	}
-	custom := `D:\Try Omarchy Test`
-	want := `-dir "D:\Try Omarchy Test" -settings`
+	custom := `D:\Try Wau Test`
+	want := `-dir "D:\Try Wau Test" -settings`
 	if got := settingsShortcutArguments(custom); got != want {
 		t.Fatalf("custom settings shortcut arguments = %q, want %q", got, want)
 	}
@@ -26,8 +26,8 @@ func TestLaunchShortcutArguments(t *testing.T) {
 	if got := launchShortcutArguments(defaultDir, true); got != "-start" {
 		t.Fatalf("default automatic shortcut arguments = %q", got)
 	}
-	custom := `D:\Try Omarchy Test`
-	want := `-dir "D:\Try Omarchy Test" -start`
+	custom := `D:\Try Wau Test`
+	want := `-dir "D:\Try Wau Test" -start`
 	if got := launchShortcutArguments(custom, true); got != want {
 		t.Fatalf("custom automatic shortcut arguments = %q, want %q", got, want)
 	}
@@ -39,9 +39,9 @@ func TestLaunchShortcutArguments(t *testing.T) {
 func TestNewInstallPreservesForeignShortcuts(t *testing.T) {
 	dir := t.TempDir()
 	paths := []string{
-		filepath.Join(dir, "Try Omarchy.lnk"),
-		filepath.Join(dir, "Try Omarchy Settings.lnk"),
-		filepath.Join(dir, "Desktop Try Omarchy.lnk"),
+		filepath.Join(dir, "Try Wau.lnk"),
+		filepath.Join(dir, "Try Wau Settings.lnk"),
+		filepath.Join(dir, "Desktop Try Wau.lnk"),
 	}
 	oldTarget := filepath.Join(dir, "old-install", stableLauncherName)
 	newTarget := filepath.Join(dir, "new-install", stableLauncherName)
@@ -69,9 +69,9 @@ func TestSecondInstallGetsFolderShortcutsAfterGlobalConflict(t *testing.T) {
 	}
 	newTarget := filepath.Join(dir, stableLauncherName)
 	paths := []string{
-		filepath.Join(root, "Try Omarchy.lnk"),
-		filepath.Join(root, "Try Omarchy Settings.lnk"),
-		filepath.Join(root, "Desktop Try Omarchy.lnk"),
+		filepath.Join(root, "Try Wau.lnk"),
+		filepath.Join(root, "Try Wau Settings.lnk"),
+		filepath.Join(root, "Desktop Try Wau.lnk"),
 	}
 	if err := writeShellLink(paths[0], oldTarget, "-dir old", root); err != nil {
 		t.Fatal(err)
@@ -81,8 +81,8 @@ func TestSecondInstallGetsFolderShortcutsAfterGlobalConflict(t *testing.T) {
 		t.Fatal(err)
 	}
 	message, err := finishLauncherShortcutChoice(paths, newTarget, dir, true, false, true)
-	if err != nil || !strings.Contains(message, "Your Start menu already has a Try Omarchy shortcut") ||
-		!strings.Contains(message, "open Start Omarchy in:\n"+dir) || strings.Contains(message, `\\`) {
+	if err != nil || !strings.Contains(message, "Your Start menu already has a Try Wau shortcut") ||
+		!strings.Contains(message, "open Start Wau in:\n"+dir) || strings.Contains(message, `\\`) {
 		t.Fatalf("folder fallback: message=%q err=%v", message, err)
 	}
 	if !shortcutOfferRecorded(dir) {
@@ -93,7 +93,7 @@ func TestSecondInstallGetsFolderShortcutsAfterGlobalConflict(t *testing.T) {
 		t.Fatalf("foreign Start Menu shortcut changed: %v", err)
 	}
 	for _, item := range []struct{ name, arguments string }{
-		{"Start Omarchy.lnk", launchShortcutArguments(dir, true)},
+		{"Start Wau.lnk", launchShortcutArguments(dir, true)},
 		{"Settings.lnk", settingsShortcutArguments(dir)},
 	} {
 		target, arguments, err := readShellLink(filepath.Join(dir, item.name))
@@ -106,9 +106,9 @@ func TestSecondInstallGetsFolderShortcutsAfterGlobalConflict(t *testing.T) {
 func TestNewInstallRefreshesItsOwnShortcuts(t *testing.T) {
 	dir := t.TempDir()
 	paths := []string{
-		filepath.Join(dir, "Try Omarchy.lnk"),
-		filepath.Join(dir, "Try Omarchy Settings.lnk"),
-		filepath.Join(dir, "Desktop Try Omarchy.lnk"),
+		filepath.Join(dir, "Try Wau.lnk"),
+		filepath.Join(dir, "Try Wau Settings.lnk"),
+		filepath.Join(dir, "Desktop Try Wau.lnk"),
 	}
 	target := filepath.Join(dir, stableLauncherName)
 	if err := writeShellLink(paths[0], target, "-old", dir); err != nil {

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="app/OmarchyIcon.svg" width="88" height="88" alt="Try Omarchy icon">
+  <img src="app/WauIcon.svg" width="88" height="88" alt="Try Wau icon">
 </p>
 
 <h1 align="center">Try Omarchy for Windows</h1>

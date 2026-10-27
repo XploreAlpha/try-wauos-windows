@@ -26,7 +26,7 @@ func runHelloBridge() {
 			// process, including one in another Windows session, could
 			// otherwise take the single slot or ask for prompts.
 			if pid, err := loopbackPeerPID(conn); err != nil || pid == 0 || pid != qemuPid.Load() {
-				logf("Windows Hello: refused a connection that is not from Omarchy's QEMU")
+				logf("Windows Hello: refused a connection that is not from Wau's QEMU")
 				conn.Close()
 				continue
 			}

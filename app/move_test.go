@@ -633,7 +633,7 @@ func TestInterruptedMoveRebasesGuardedStagingAfterVolumeChange(t *testing.T) {
 		t.Fatal(err)
 	}
 	newDestination := filepath.Join(t.TempDir(), "TryOmarchy")
-	newStage := filepath.Join(filepath.Dir(newDestination), ".TryOmarchy-move-"+m.ID)
+	newStage := filepath.Join(filepath.Dir(newDestination), ".TryWau-move-"+m.ID)
 	if err := os.Rename(m.Stage, newStage); err != nil {
 		t.Fatal(err)
 	}

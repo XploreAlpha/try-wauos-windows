@@ -63,7 +63,7 @@ func parseForward(value string) (portForward, error) {
 		return f, fmt.Errorf("port forward %q: Windows port %v", value, err)
 	}
 	if f.guestPort, err = parsePort(parts[1]); err != nil {
-		return f, fmt.Errorf("port forward %q: Omarchy port %v", value, err)
+		return f, fmt.Errorf("port forward %q: Wau port %v", value, err)
 	}
 	return f, nil
 }
@@ -165,7 +165,7 @@ func loadPublicKey(path string) (string, error) {
 
 // defaultPublicKey finds the user's usual public key when -ssh is used
 // without -ssh-key. No key is not an error: password login still works
-// until the user hardens sshd inside Omarchy.
+// until the user hardens sshd inside Wau.
 func defaultPublicKey(home string) string {
 	for _, name := range []string{"id_ed25519.pub", "id_ecdsa.pub", "id_rsa.pub"} {
 		path := filepath.Join(home, ".ssh", name)

@@ -219,7 +219,7 @@ func approveHelloRequest(request helloRequest) helloResponse {
 		owner := qemuHwnd.Load()
 		switch {
 		case pid == 0 || owner == 0 || foregroundPid() != pid:
-			err = errors.New("Omarchy window is not in front")
+			err = errors.New("Wau window is not in front")
 		case time.Since(helloLastDenial) < 3*time.Second:
 			err = errors.New("previous request was just denied")
 		default:
@@ -252,11 +252,11 @@ func createHelloCredential(owner uintptr, request helloRequest) (string, error) 
 		return "", err
 	}
 	clientData := helloClientData(request)
-	rp := webauthnRP{Version: 1, ID: wideString(helloRelyingPartyID), Name: wideString("Try Omarchy")}
+	rp := webauthnRP{Version: 1, ID: wideString(helloRelyingPartyID), Name: wideString("Try Wau")}
 	user := webauthnUser{
 		Version: 1, IDLength: uint32(len(userID)), ID: &userID[0],
 		Name:        wideString("omarchy-sudo-" + request.GuestID[:8]),
-		DisplayName: wideString("Omarchy sudo (" + request.GuestID[:8] + ")"),
+		DisplayName: wideString("Wau sudo (" + request.GuestID[:8] + ")"),
 	}
 	algorithm := webauthnCoseParameter{Version: 1, Type: wideString("public-key"), Algorithm: webauthnCoseES256}
 	algorithms := webauthnCoseParameters{Count: 1, Parameters: &algorithm}

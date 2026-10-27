@@ -24,11 +24,11 @@ func TestChoiceDialogNative(t *testing.T) {
 		}
 		finished := make(chan result, 1)
 		go func() {
-			action, err := chooseAction("Try Omarchy choice test", "This test changes no installation files.", "First action", "Second action", "Close")
+			action, err := chooseAction("Try Wau choice test", "This test changes no installation files.", "First action", "Second action", "Close")
 			finished <- result{action, err}
 		}()
 		class, _ := syscall.UTF16PtrFromString("TryOmarchyChoice")
-		title, _ := syscall.UTF16PtrFromString("Try Omarchy choice test")
+		title, _ := syscall.UTF16PtrFromString("Try Wau choice test")
 		var window, button uintptr
 		deadline := time.Now().Add(5 * time.Second)
 		for time.Now().Before(deadline) {
@@ -75,7 +75,7 @@ func TestChoiceDialogHiddenStartup(t *testing.T) {
 	if os.Getenv("TRYOMARCHY_UI_TEST") != "1" {
 		t.Skip("requires an interactive Windows desktop and TRYOMARCHY_UI_TEST=1")
 	}
-	const titleText = "Try Omarchy hidden-startup test"
+	const titleText = "Try Wau hidden-startup test"
 	if os.Getenv("TRYOMARCHY_CHOICE_CHILD") == "1" {
 		action, err := chooseAction(titleText, "A native dialog must remain visible when its process suppresses a console.", "Close")
 		if err != nil || action != 0 {
@@ -140,7 +140,7 @@ func TestFirstRunLocationNative(t *testing.T) {
 			path, proceed, err := chooseFirstRunDataDirectory(dir)
 			done <- selection{path, proceed, err}
 		}()
-		title, _ := syscall.UTF16PtrFromString("Choose where to keep Omarchy")
+		title, _ := syscall.UTF16PtrFromString("Choose where to keep Wau")
 		var window, button uintptr
 		for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); {
 			window, _, _ = user32.NewProc("FindWindowW").Call(0, uintptr(unsafe.Pointer(title)))

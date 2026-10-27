@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-// Applying port-forward changes from Settings while Omarchy runs. QEMU's user
+// Applying port-forward changes from Settings while Wau runs. QEMU's user
 // network can add and remove host forwards at runtime through the monitor's
 // hostfwd_add and hostfwd_remove commands. Only local forwards change live: a
 // LAN forward needs its Windows firewall rule, which takes an elevation

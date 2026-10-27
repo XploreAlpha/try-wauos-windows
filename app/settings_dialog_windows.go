@@ -72,7 +72,7 @@ const (
 	settingsAltTabID             = 2126
 	settingsUSBSelectionID       = 2127
 	settingsVolumeSyncID         = 2128
-	settingsInstallOmarchyID     = 2130
+	settingsInstallWauID     = 2130
 	settingsLinkListID           = 2131
 	settingsLinkAllowID          = 2132
 	settingsLinkRevokeID         = 2133
@@ -712,7 +712,7 @@ func runLauncherSettings(path, dataDir string, portable, launcher bool, beforeRe
 				launchRecovery("reset")
 			case settingsUninstallID:
 				launchRecovery("uninstall")
-			case settingsInstallOmarchyID:
+			case settingsInstallWauID:
 				launchRecovery("install-omarchy")
 			}
 			return 0
@@ -1303,7 +1303,7 @@ func runLauncherSettings(path, dataDir string, portable, launcher bool, beforeRe
 	}
 	y += 40 + grow
 	y = note(uiText("settings.recovery.install_help"), left, y, clientW-2*left, 20, 26)
-	_, grow = buttons(left, y, 26, 0, rowButton{uiText("settings.recovery.install"), 160, settingsInstallOmarchyID})
+	_, grow = buttons(left, y, 26, 0, rowButton{uiText("settings.recovery.install"), 160, settingsInstallWauID})
 	pages[3] = append(pages[3], scroll.controls...)
 	pageHeights[3] = y + 40 + grow
 	scroll.controls = nil

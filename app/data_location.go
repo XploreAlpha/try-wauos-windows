@@ -18,7 +18,12 @@ const (
 
 // Kept as a variable so isolated signed test builds can use their own data
 // directory without changing production behavior.
-var defaultDataDirectoryName = "TryOmarchy"
+var defaultDataDirectoryName = "TryWau"
+
+// legacyDataDirectoryName is the default data directory of the releases that
+// shipped under the previous name. An installation created by one of those
+// releases still keeps its files there.
+const legacyDataDirectoryName = "TryOmarchy"
 
 type dataLocationPointer struct {
 	Version int    `json:"version"`
@@ -31,6 +36,10 @@ type dataLocationChooser func(defaultDir string) (selected string, proceed bool,
 // place: an explicit -dir wins, then a remembered alternate location, then an
 // existing default install, and finally the first-run chooser.
 func resolveStandardDataDirectory(defaultDir, requested string, explicit, prompt bool, choose dataLocationChooser) (string, bool, error) {
+	// The rebrand renamed the default folder. Move an existing installation
+	// across before anything looks for it, or the launcher would ask for a
+	// location while the old one still holds the guest.
+	migrateLegacyDataDirectory(defaultDir)
 	if explicit {
 		return requested, true, nil
 	}
@@ -153,6 +162,48 @@ func saveDataLocationPointer(defaultDir, selected string) error {
 		return err
 	}
 	return nil
+}
+
+// migrateLegacyDataDirectory renames the default data directory of the
+// previous product name to the current one. The folder also holds the pointer
+// that remembers an installation kept on another drive, so moving the folder
+// moves that pointer along with it. A folder that already holds something
+// under the new name is never touched, and a rename that Windows refuses
+// falls back to a pointer at the old location so the launcher keeps working.
+func migrateLegacyDataDirectory(defaultDir string) {
+	legacy := filepath.Join(filepath.Dir(defaultDir), legacyDataDirectoryName)
+	if legacy == defaultDir {
+		return
+	}
+	if _, err := os.Lstat(legacy); err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			logf("data location: cannot inspect %s: %v", legacy, err)
+		}
+		return
+	}
+	if _, err := os.Lstat(defaultDir); err == nil {
+		unclaimed, err := dataDirectoryUnclaimed(defaultDir)
+		if err != nil {
+			logf("data location: cannot inspect %s: %v", defaultDir, err)
+			return
+		}
+		if !unclaimed {
+			return
+		}
+	} else if !errors.Is(err, os.ErrNotExist) {
+		logf("data location: cannot inspect %s: %v", defaultDir, err)
+		return
+	}
+	if err := os.Rename(legacy, defaultDir); err != nil {
+		logf("data location: cannot rename %s: %v", legacy, err)
+		// The old folder is in use, most likely by a running guest. Point the
+		// new name at it instead of moving files the user may be writing to.
+		if err := saveDataLocationPointer(defaultDir, legacy); err != nil {
+			logf("data location: cannot point %s at %s: %v", defaultDir, legacy, err)
+		}
+		return
+	}
+	logf("data location: renamed %s to %s", legacy, defaultDir)
 }
 
 func validateDataLocationPath(path string) (string, error) {

@@ -72,20 +72,20 @@ const (
 	desktopReachedName  = "desktop-reached"
 )
 
-// A first boot that asks for the user's own account shows Omarchy's account
+// A first boot that asks for the user's own account shows Wau's account
 // form in this window, so the curtain is only for disks that have reached
 // the desktop before, and for the quick-start account, which asks nothing.
 func startBootCurtain(cfg *config) {
 	id, err := diskIdentity(cfg.disk)
 	if err != nil {
-		logf("startup: showing the window while Omarchy boots (disk identity: %v)", err)
+		logf("startup: showing the window while Wau boots (disk identity: %v)", err)
 		return
 	}
 	curtainMu.Lock()
 	curtainDiskID, curtainVMDir = id, cfg.vmDir
 	curtainMu.Unlock()
 	if !cfg.instant && !desktopReachedBefore(cfg.vmDir, id) {
-		logf("startup: showing the window while Omarchy boots (first desktop on this disk)")
+		logf("startup: showing the window while Wau boots (first desktop on this disk)")
 		return
 	}
 	ui := getUI()
@@ -284,7 +284,7 @@ func liftCurtain(reason string) {
 	windows := curtainWindows
 	curtainWindows = map[uintptr]*curtainWindow{}
 	curtainMu.Unlock()
-	logf("startup: showing Omarchy (%s)", reason)
+	logf("startup: showing Wau (%s)", reason)
 	// A window from an attempt that failed is gone, and its handle may
 	// belong to another program by now.
 	pid := qemuPid.Load()

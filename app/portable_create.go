@@ -77,7 +77,7 @@ func createPortableCopyUsingTool(dir, destination, launcher, tool string, report
 	if err := os.WriteFile(filepath.Join(payload, "SHA256SUMS"), defaultSums, 0600); err != nil {
 		return err
 	}
-	for name, flags := range map[string]string{"Start Omarchy.cmd": "-portable", "Settings.cmd": "-portable -settings"} {
+	for name, flags := range map[string]string{"Start Wau.cmd": "-portable", "Settings.cmd": "-portable -settings"} {
 		if err := os.WriteFile(filepath.Join(bundle, name), []byte("@echo off\r\n\"%~dp0TryOmarchy.exe\" "+flags+" %*\r\n"), 0600); err != nil {
 			return err
 		}

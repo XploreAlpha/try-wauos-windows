@@ -186,7 +186,7 @@ func TestStandardDataDirectorySelectionRejectsForeignFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 	foreign := filepath.Join(dir, "keep-me.txt")
-	if err := os.WriteFile(foreign, []byte("not owned by Try Omarchy"), 0o644); err != nil {
+	if err := os.WriteFile(foreign, []byte("not owned by Try Wau"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if selectable, err := standardDataDirectorySelectable(dir); err != nil || selectable {
@@ -195,7 +195,7 @@ func TestStandardDataDirectorySelectionRejectsForeignFiles(t *testing.T) {
 	if err := cleanupCancelledSetup(dir, filepath.Join(t.TempDir(), "TryOmarchy.exe"), false); err != nil {
 		t.Fatal(err)
 	}
-	if data, err := os.ReadFile(foreign); err != nil || string(data) != "not owned by Try Omarchy" {
+	if data, err := os.ReadFile(foreign); err != nil || string(data) != "not owned by Try Wau" {
 		t.Fatalf("foreign file after conservative cleanup = %q, %v", data, err)
 	}
 }

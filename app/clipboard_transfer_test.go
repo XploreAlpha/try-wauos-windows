@@ -244,7 +244,7 @@ func TestClipboardTransferDoesNotSendReplacedSelection(t *testing.T) {
 	}
 }
 
-// Files copied before Omarchy started may be gone by the time the guest
+// Files copied before Wau started may be gone by the time the guest
 // connects. That is not an error to show; copying missing files later is.
 func TestClipboardFilesGoneBeforeConnectAreNotReported(t *testing.T) {
 	service := newFileTransferService(t.TempDir(), clipboardTransferLimits)
@@ -267,11 +267,11 @@ func TestClipboardFilesGoneBeforeConnectAreNotReported(t *testing.T) {
 		t.Fatalf("files copied before connecting were reported: %v", err)
 	case <-time.After(200 * time.Millisecond):
 	}
-	sequence.Store(8) // the user copies again while Omarchy runs
+	sequence.Store(8) // the user copies again while Wau runs
 	bridge.sendCurrentHost(host)
 	select {
 	case <-reported:
 	case <-time.After(time.Second):
-		t.Fatal("a failed copy made while Omarchy runs was not reported")
+		t.Fatal("a failed copy made while Wau runs was not reported")
 	}
 }

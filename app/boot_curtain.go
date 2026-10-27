@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// While Omarchy boots, its window shows nothing worth looking at: firmware
+// While Wau boots, its window shows nothing worth looking at: firmware
 // text, "Display output is not active", then black and Hyprland's empty grey
 // until the shell draws the wallpaper. The launcher keeps the window
 // invisible for that time and the setup window stays up with the starter
@@ -17,7 +17,7 @@ const (
 	// After the desktop session starts. The wallpaper took about 6 seconds
 	// on the test laptop; a few wallpapers cannot be told from an empty screen.
 	curtainPaintWait = 10 * time.Second
-	// After Omarchy reports that it is up, for a session that never starts
+	// After Wau reports that it is up, for a session that never starts
 	// (a login screen, a broken config).
 	curtainSessionWait = 60 * time.Second
 	// From the start of the boot, whatever else happened.

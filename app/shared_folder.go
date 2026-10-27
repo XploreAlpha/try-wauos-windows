@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const recommendedSharedFolderName = "Omarchy Shared"
+const recommendedSharedFolderName = "Wau Shared"
 
 func recommendedSharedFolderPath(home string) (string, error) {
 	home = strings.TrimSpace(home)

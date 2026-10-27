@@ -24,13 +24,13 @@ func TestEmbeddedLauncherMessages(t *testing.T) {
 		t.Fatalf("Simplified Chinese Windows language must select zh-Hans, got %q", got)
 	}
 	translator := uiTranslator{language: "zh-Hans", catalogs: catalogs}
-	if got := translator.text("about.title"); got != "关于 Try Omarchy" {
+	if got := translator.text("about.title"); got != "关于 Try Wau" {
 		t.Errorf("Simplified Chinese title is incorrect: %q", got)
 	}
 	message := uiTextWith("about.body", map[string]string{
 		"version": "v0.5.0", "website": "https://tryomarchy.com", "source": "https://github.com/omacom/try-omarchy-windows",
 	})
-	for _, want := range []string{"Try Omarchy v0.5.0", "https://tryomarchy.com", "https://github.com/omacom/try-omarchy-windows"} {
+	for _, want := range []string{"Try Wau v0.5.0", "https://tryomarchy.com", "https://github.com/omacom/try-omarchy-windows"} {
 		if !strings.Contains(message, want) {
 			t.Errorf("About message is missing %q", want)
 		}
@@ -41,10 +41,10 @@ func TestEmbeddedLauncherMessages(t *testing.T) {
 	if got := selectUILanguage([]string{"ko-KR"}, catalogs); got != "ko" {
 		t.Fatalf("Korean Windows language must select ko, got %q", got)
 	}
-	if got := (uiTranslator{language: "ko", catalogs: catalogs}).text("about.title"); got != "Try Omarchy 정보" {
+	if got := (uiTranslator{language: "ko", catalogs: catalogs}).text("about.title"); got != "Try Wau 정보" {
 		t.Errorf("Korean title is incorrect: %q", got)
 	}
-	if got := (uiTranslator{language: "en", catalogs: catalogs}).text("about.title"); got != "About Try Omarchy" {
+	if got := (uiTranslator{language: "en", catalogs: catalogs}).text("about.title"); got != "About Try Wau" {
 		t.Fatalf("English catalog changed unexpectedly: %q", got)
 	}
 	for _, key := range []string{"about.no_update", "about.update_available"} {
@@ -179,7 +179,7 @@ func TestLauncherTextComesFromTheCatalog(t *testing.T) {
 	// Window classes, key names and format verbs are not words to translate.
 	allowed := map[string]bool{
 		"": true, "%s": true, "STATIC": true, "BUTTON": true, "EDIT": true, "LISTBOX": true,
-		"COMBOBOX": true, "msctls_trackbar32": true, "WINDOWS  ·  ": true, "Omarchy-": true, ".zip": true,
+		"COMBOBOX": true, "msctls_trackbar32": true, "WINDOWS  ·  ": true, "Wau-": true, ".zip": true,
 		"SUPER+SPACE": true, "SUPER+K": true, "SUPER+RETURN": true, "SUPER+W": true,
 	}
 	files, err := filepath.Glob("*.go")

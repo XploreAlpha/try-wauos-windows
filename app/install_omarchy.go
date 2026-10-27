@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// Installing Omarchy next to Windows: the launcher checks what would get in
+// Installing Wau next to Windows: the launcher checks what would get in
 // the way and explains the steps. The import itself runs on the new install
 // (migrate/ in this repository), which reads vm\disk.raw straight off the
 // Windows drive.
@@ -49,7 +49,7 @@ type installReadiness struct {
 	Portable    bool
 	DiskMissing bool
 	Running     bool
-	// ShutdownRequested is set by the walkthrough after it asked Omarchy to
+	// ShutdownRequested is set by the walkthrough after it asked Wau to
 	// shut down, so a slow shutdown reads as in progress.
 	ShutdownRequested bool
 	// FastStartup is true when it is on or cannot be read. Turning it off

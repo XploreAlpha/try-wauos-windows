@@ -42,7 +42,7 @@ try {
   if($current.Count){$current | Remove-NetFirewallRule}
   $local=if($wanted.address -eq '0.0.0.0'){'Any'}else{$wanted.address}
   $profiles=if($p.public){@('Any')}else{@('Domain','Private')}
-  New-NetFirewallRule -PolicyStore PersistentStore -Name $name -DisplayName ('Try Omarchy '+$wanted.protocol.ToUpper()+' '+$wanted.port) -Group $p.group -Direction Inbound -Action Allow -Enabled True -Profile $profiles -Program $p.program -Protocol $wanted.protocol -LocalPort $wanted.port -LocalAddress $local -RemoteAddress LocalSubnet -EdgeTraversalPolicy Block | Out-Null
+  New-NetFirewallRule -PolicyStore PersistentStore -Name $name -DisplayName ('Try Wau '+$wanted.protocol.ToUpper()+' '+$wanted.port) -Group $p.group -Direction Inbound -Action Allow -Enabled True -Profile $profiles -Program $p.program -Protocol $wanted.protocol -LocalPort $wanted.port -LocalAddress $local -RemoteAddress LocalSubnet -EdgeTraversalPolicy Block | Out-Null
   $created+=,$name
  }
  $existing | Where-Object {$_.Name -notin $names} | Remove-NetFirewallRule
@@ -168,7 +168,7 @@ func portableFirewallProcessRunning(pid int) bool {
 
 func prepareLANFirewall(cfg *config) error {
 	local := os.Getenv("LOCALAPPDATA")
-	root := filepath.Join(local, "TryOmarchy", "portable-host", "firewall-owners")
+	root := filepath.Join(local, "TryWau", "portable-host", "firewall-owners")
 	notice := func(err error) { firewallCleanupNotice(err.Error(), "") }
 	return ensureLANFirewallAfterCleanup(func() error {
 		if !filepath.IsAbs(local) {

@@ -155,7 +155,7 @@ func runUninstall(dir string) error {
 		// Leftover rules name only this folder's QEMU, which is deleted next.
 		logf("uninstall: LAN firewall rules were not removed: %v", err)
 		if id, idErr := networkIdentity(dir, false); idErr == nil && id != "" {
-			logf("uninstall: remove the Windows Firewall rules in group TryOmarchy-%s by hand", id)
+			logf("uninstall: remove the Windows Firewall rules in group %s%s by hand", lanFirewallGroupPrefix, id)
 		}
 	}
 	if err := checkMovedUninstall(dir); err != nil {
@@ -168,7 +168,7 @@ func runUninstall(dir string) error {
 	if rel, err := filepath.Rel(dir, self); err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		// This process runs from inside the folder it must delete. A copy
 		// outside the folder finishes the job after this one exits.
-		helper := filepath.Join(os.TempDir(), fmt.Sprintf("TryOmarchy-uninstall-%d.exe", os.Getpid()))
+		helper := filepath.Join(os.TempDir(), fmt.Sprintf("TryWau-uninstall-%d.exe", os.Getpid()))
 		if err := copyLauncher(self, helper, replaceLauncher); err != nil {
 			return fmt.Errorf("preparing the removal helper: %w", err)
 		}

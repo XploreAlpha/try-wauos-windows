@@ -250,7 +250,7 @@ func writeFirstRegistrationUpTo(t *testing.T, scheme, dir string, steps int) {
 		syscall.RegCloseKey(command)
 	}
 	if steps >= 2 {
-		regSetString(key, "", "URL:"+scheme+" (Try Omarchy)")
+		regSetString(key, "", "URL:"+scheme+" (Try Wau)")
 	}
 	if steps >= 3 {
 		regSetString(key, "URL Protocol", "")
@@ -341,7 +341,7 @@ func TestCommandlessVendorKeysAreNeverTouched(t *testing.T) {
 	regSetString(proto, "URL Protocol", "")
 	syscall.RegCloseKey(proto)
 	text, _ := openURLSchemeKeyForTest(t, names[2])
-	regSetString(text, "", "URL:"+names[2]+" (Try Omarchy)")
+	regSetString(text, "", "URL:"+names[2]+" (Try Wau)")
 	syscall.RegCloseKey(text)
 	snapshot := func() map[string]urlSchemeRegistration {
 		out := map[string]urlSchemeRegistration{}

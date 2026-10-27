@@ -98,7 +98,7 @@ func launcherUpdateDir(dir string) string {
 }
 
 func previousLauncherPath(dir string) string {
-	return filepath.Join(launcherUpdateDir(dir), "TryOmarchy.previous.exe")
+	return filepath.Join(launcherUpdateDir(dir), "TryWau.previous.exe")
 }
 
 func stagedLauncherPath(dir, version string) string {

@@ -141,7 +141,7 @@ func launcherShortcutPaths() ([]string, error) {
 			return nil, fmt.Errorf("Windows returned an empty shortcut folder")
 		}
 	}
-	return []string{filepath.Join(folders[0], "Try Omarchy.lnk"), filepath.Join(folders[0], "Try Omarchy Settings.lnk"), filepath.Join(folders[1], "Try Omarchy.lnk")}, nil
+	return []string{filepath.Join(folders[0], "Try Wau.lnk"), filepath.Join(folders[0], "Try Wau Settings.lnk"), filepath.Join(folders[1], "Try Wau.lnk")}, nil
 }
 
 // Read identity with the Unicode API before modifying a link. Never resolve or

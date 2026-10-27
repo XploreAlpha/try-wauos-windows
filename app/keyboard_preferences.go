@@ -21,7 +21,7 @@ type keyboardPreferences struct {
 }
 
 // altTabToWindows leaves Alt+Tab to the Windows task switcher instead of
-// forwarding it to the guest while Omarchy is focused.
+// forwarding it to the guest while Wau is focused.
 var altTabToWindows atomic.Bool
 
 func loadKeyboardPreferences(dir string) (keyboardPreferences, error) {
@@ -92,13 +92,13 @@ func applyKeyboardPreferences(dir string, lastErr *string) {
 		if p.AltTabToWindows {
 			logf("keyboard: Alt+Tab goes to Windows")
 		} else {
-			logf("keyboard: Alt+Tab goes to Omarchy while it is focused")
+			logf("keyboard: Alt+Tab goes to Wau while it is focused")
 		}
 	}
 }
 
 // watchKeyboardPreferences applies a choice saved in Settings, which runs in
-// its own process, while Omarchy keeps running.
+// its own process, while Wau keeps running.
 func watchKeyboardPreferences(dir string) {
 	var lastErr string
 	for {

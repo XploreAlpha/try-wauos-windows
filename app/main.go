@@ -21,14 +21,14 @@ import (
 	"time"
 )
 
-// Try Omarchy for Windows - the native app shell. One exe replacing
+// Try Wau for Windows - the native app shell. One exe replacing
 // launch-omarchy.ps1 + winkey-forwarder.ps1 + clipboard-bridge.ps1:
 // launches QEMU (WINQ-EMU GPU stack when installed, stock CPU fallback),
 // supervises it through WHPX's rough edges, scopes the Windows key to the VM
 // window, keeps the window branded, and bridges the clipboard. The native
 // launcher edits settings before handing off to the SDL guest window.
 
-const appTitle = "Try Omarchy"
+const appTitle = "Try Wau"
 
 type config struct {
 	desktop                     desktopPreferences
@@ -149,9 +149,9 @@ func main() {
 	cfg := &config{}
 	removeDataOnCancel := false
 	defaultDir := filepath.Join(os.Getenv("LOCALAPPDATA"), defaultDataDirectoryName)
-	flag.StringVar(&cfg.dir, "dir", defaultDir, "Try Omarchy data directory (virtual machine, runtime, and settings)")
+	flag.StringVar(&cfg.dir, "dir", defaultDir, "Try Wau data directory (virtual machine, runtime, and settings)")
 	flag.StringVar(&cfg.winqEmu, "winq", `C:\WINQ-EMU`, "WINQ-EMU install path (GPU mode)")
-	flag.StringVar(&cfg.share, "share", "", "Windows folder shared into Omarchy at /mnt/host and as ~/<folder name>")
+	flag.StringVar(&cfg.share, "share", "", "Windows folder shared into Wau at /mnt/host and as ~/<folder name>")
 	flag.BoolVar(&cfg.fresh, "fresh", false, "start over and retain the previous writable disk for recovery")
 	flag.IntVar(&cfg.displays, "displays", 1, "number of guest displays (1 to 16)")
 	flag.BoolVar(&cfg.fullscreen, "fullscreen", false, "start fullscreen (Immersive)")
@@ -171,24 +171,24 @@ func main() {
 	flag.BoolVar(&cfg.instant, "instant", false, "skip first-boot questions and use the quick-start account (omarchy / omarchy)")
 	flag.BoolVar(&cfg.portable, "portable", false, "run entirely from data and payload folders beside the executable")
 	var forwards forwardList
-	flag.Var(&forwards, "forward", "forward a Windows port into Omarchy: tcp:2222:22 (local), tcp:192.168.1.5:8080:80 (LAN); repeatable")
+	flag.Var(&forwards, "forward", "forward a Windows port into Wau: tcp:2222:22 (local), tcp:192.168.1.5:8080:80 (LAN); repeatable")
 	firewallPlan := flag.String("firewall-plan", "", "internal: apply owned LAN firewall rules")
 	flag.BoolVar(&cfg.lanPublic, "lan-public", false, "allow explicitly selected LAN forwards on public networks")
-	sshPort := flag.Int("ssh", 0, "forward this Windows loopback port to Omarchy's sshd and start sshd for the session")
+	sshPort := flag.Int("ssh", 0, "forward this Windows loopback port to Wau's sshd and start sshd for the session")
 	openAbout := flag.Bool("about", false, "show version information and check for updates")
 	usbSelection := flag.Bool("usb-selection", false, "internal: edit startup USB selection for an explicit data folder")
 	openDevices := flag.Bool("devices", false, "manage USB devices in the running VM")
 	recoveryAction := flag.String("recovery", "", "open backup, restore, snapshots, portable-create, reset, move, uninstall, or install-omarchy controls")
-	uninstall := flag.Bool("uninstall", false, "remove this Try Omarchy installation: shortcuts, the Apps & features entry, and the data folder")
+	uninstall := flag.Bool("uninstall", false, "remove this Try Wau installation: shortcuts, the Apps & features entry, and the data folder")
 	uninstallFinish := flag.Bool("uninstall-finish", false, "internal: delete the data folder after the launcher inside it exits")
-	reclaim := flag.Bool("reclaim", false, "ask the running Omarchy to zero its free space so the disk file shrinks after shutdown, then exit")
+	reclaim := flag.Bool("reclaim", false, "ask the running Wau to zero its free space so the disk file shrinks after shutdown, then exit")
 	backupPath := flag.String("backup", "", "back up a stopped standard VM to a new ZIP file, then exit")
 	restorePath := flag.String("restore", "", "restore a trusted backup into a new folder selected with -dir, then exit")
 	openSettings := flag.Bool("settings", false, "open the settings window, then exit")
-	openLauncher := flag.Bool("launcher", false, "open the launcher before starting Omarchy")
-	startImmediately := flag.Bool("start", false, "start Omarchy immediately without the launcher window")
+	openLauncher := flag.Bool("launcher", false, "open the launcher before starting Wau")
+	startImmediately := flag.Bool("start", false, "start Wau immediately without the launcher window")
 	diagnostics := flag.Bool("diagnostics", false, "write a zip of logs, settings, and machine facts for a bug report, then exit")
-	sshKeyPath := flag.String("ssh-key", "", "public key to authorize for the Omarchy account (default: your ~/.ssh/id_*.pub when -ssh is used)")
+	sshKeyPath := flag.String("ssh-key", "", "public key to authorize for the Wau account (default: your ~/.ssh/id_*.pub when -ssh is used)")
 	noUpdate := flag.Bool("no-update", false, "do not check the feed for newer releases")
 	updateURL := flag.String("update-url", defaultUpdateURL, "authenticated update manifest URL")
 	release := flag.String("release", defaultReleaseURL,
@@ -200,7 +200,7 @@ func main() {
 	runtimeSumsSHA256 := flag.String("runtime-sums-sha256", defaultRuntimeSumsSHA256,
 		"trusted SHA256 digest of the runtime release's SHA256SUMS file")
 	enableWhp := flag.Bool("enable-whp", false, "internal: elevated helper that enables the Windows Hypervisor Platform")
-	disableFastStartupFlag := flag.Bool("disable-fast-startup", false, "internal: elevated helper that turns off Windows Fast Startup before installing Omarchy next to Windows")
+	disableFastStartupFlag := flag.Bool("disable-fast-startup", false, "internal: elevated helper that turns off Windows Fast Startup before installing Wau next to Windows")
 	applyLauncherUpdateFlag := flag.Bool("apply-launcher-update", false, "internal: apply a staged launcher update")
 	applyLauncherRollbackFlag := flag.Bool("apply-launcher-rollback", false, "internal: restore the previous launcher")
 	restartWaitPID := flag.Int("restart-update-wait-pid", 0, "internal: wait for the stopped guest launcher before restarting")
@@ -351,7 +351,7 @@ func main() {
 		}
 		// WHP is a property of this Windows host, so its restart marker must
 		// not travel to another PC with the USB.
-		cfg.hostDir = filepath.Join(os.Getenv("LOCALAPPDATA"), "TryOmarchy", "portable-host")
+		cfg.hostDir = filepath.Join(os.Getenv("LOCALAPPDATA"), "TryWau", "portable-host")
 	} else {
 		promptForLocation := !maintenance && !*diagnostics && !*applyLauncherUpdateFlag && !*applyLauncherRollbackFlag
 		selected, proceed, err := resolveStandardDataDirectory(
@@ -617,7 +617,7 @@ func main() {
 	logf("---- %s starting ----", appTitle)
 
 	// The splash IS the launch experience: it appears here and stays on screen
-	// through every phase until the Omarchy window itself is visible (the
+	// through every phase until the Wau window itself is visible (the
 	// title enforcer closes it). Setup must never look like nothing happened.
 	getUI().setStatus("%s", uiText("status.starting_launcher"))
 	if err := configureRecommendedSharedFolder(cfg, &userSettings, settingsFile, home, explicitFlags["share"]); err != nil {
@@ -1383,7 +1383,7 @@ func watch(cfg *config, qmp *qmpConn, exited <-chan error) bool {
 		}()
 	}
 	// GPU rendering is recorded as working only once Windows has shown the
-	// desktop in the Omarchy window; blankOffered asks once per boot.
+	// desktop in the Wau window; blankOffered asks once per boot.
 	gpuRecordPending, blankOffered := false, false
 	tick := 0
 	ticker := time.NewTicker(time.Second)
@@ -1391,9 +1391,9 @@ func watch(cfg *config, qmp *qmpConn, exited <-chan error) bool {
 	procDown := false
 	movedBootPending := false
 	diskPauseNotified := false
-	// Cancel in the setup window, which stays up while Omarchy boots, shuts
+	// Cancel in the setup window, which stays up while Wau boots, shuts
 	// the guest down. Early in its boot the guest misses the power button, so
-	// it is pressed again once Omarchy reports that it is up; stopping it
+	// it is pressed again once Wau reports that it is up; stopping it
 	// outright could interrupt a first boot's account setup. A guest that
 	// still has not shut down is stopped.
 	var stopDeadline <-chan time.Time
@@ -1545,7 +1545,7 @@ func watch(cfg *config, qmp *qmpConn, exited <-chan error) bool {
 				curtainTimes().blankDesktopDue(now, desktopLooks.Load()) {
 				blankOffered = true
 				if probe, _ := loadRenderProbe(cfg.dir); !gpuDesktopConfirmed(probe, cfg.runtimeID, cfg.displayDriver) {
-					logf("display health: GPU rendering has not shown the desktop in the Omarchy window")
+					logf("display health: GPU rendering has not shown the desktop in the Wau window")
 					offerRecovery("blank")
 				}
 			}
@@ -1825,7 +1825,7 @@ func compactAfterShutdown(cfg *config) {
 }
 
 // sendOpenURL hands a link to the running launcher, which forwards it to
-// Omarchy. It never starts Omarchy, and sends the link only to a listener of
+// Wau. It never starts Wau, and sends the link only to a listener of
 // this Windows user in this session.
 func sendOpenURL(dir, url string) int {
 	prefs, err := loadApprovedURLSchemes(dir)

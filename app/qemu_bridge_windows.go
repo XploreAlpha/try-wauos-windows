@@ -29,7 +29,7 @@ func acceptQEMUBridge(listener net.Listener, name string, limit int32, serve fun
 			return
 		}
 		if !connectionFromQEMU(conn) {
-			logf("%s: refused a connection that is not from Omarchy's QEMU", name)
+			logf("%s: refused a connection that is not from Wau's QEMU", name)
 			conn.Close()
 			continue
 		}
