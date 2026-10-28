@@ -1,0 +1,1014 @@
+From a2d3366bdc58a99f5d81313d71d8a384c402ecda Mon Sep 17 00:00:00 2001
+From: Try Omarchy Release <actions@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 17:28:03 +0800
+Subject: [PATCH] Ship Wau OS in the Omarchy guest
+
+The guest carries Omarchy as its runtime. Wau OS belongs to that runtime, so
+two things have to reach the image: the Wau OS package, and the first-run
+step that sets Wau OS up on a new account.
+
+The package is installed from a verified archive after the locked transaction,
+never resolved from a live repository, and its compositor dependencies join
+the transaction itself. The first-run step is an overlay on the pinned
+Omarchy runtime: every file it replaces carries the digest of the upstream
+file it was reviewed against.
+---
+ guest/build-container.sh                      |  23 +-
+ guest/build.sh                                |  23 ++
+ guest/packages.txt                            |   3 +
+ guest/scripts/apply-wau-os-overlay.sh         | 132 +++++++++++
+ guest/scripts/register-local-repository.sh    |  12 +-
+ guest/scripts/register-wau-os.sh              | 155 ++++++++++++
+ guest/spec.json                               |   6 +
+ guest/tests/test_wau_os.py                    | 221 ++++++++++++++++++
+ guest/tests/verify.py                         |  50 ++++
+ guest/wau-os/overlay-manifest.json            |  19 ++
+ .../usr/bin/omarchy-provision-first-run       | 102 ++++++++
+ .../user/first-run/wau-os-first-run.sh        |  48 ++++
+ 12 files changed, 791 insertions(+), 3 deletions(-)
+ create mode 100755 guest/scripts/apply-wau-os-overlay.sh
+ create mode 100755 guest/scripts/register-wau-os.sh
+ create mode 100644 guest/tests/test_wau_os.py
+ create mode 100644 guest/wau-os/overlay-manifest.json
+ create mode 100755 guest/wau-os/overlay/usr/bin/omarchy-provision-first-run
+ create mode 100755 guest/wau-os/overlay/usr/share/omarchy/install/user/first-run/wau-os-first-run.sh
+
+diff --git a/guest/build-container.sh b/guest/build-container.sh
+index 643d025..14896dc 100755
+--- a/guest/build-container.sh
++++ b/guest/build-container.sh
+@@ -14,6 +14,7 @@ output="$repo_dir/dist/guest"
+ output_set=0
+ work_volume=""
+ refresh_package_lock=""
++wau_os_package=""
+ dry_run=0
+ 
+ while (($#)); do
+@@ -31,6 +32,10 @@ while (($#)); do
+       refresh_package_lock=${2:-}
+       shift 2
+       ;;
++    --wau-os-package)
++      wau_os_package=${2:-}
++      shift 2
++      ;;
+     --dry-run)
+       dry_run=1
+       shift
+@@ -42,6 +47,7 @@ Usage: guest/build-container.sh [options]
+   --output DIR                   Artifact directory (default: dist/guest)
+   --work-volume NAME             Persistent Docker build/cache volume
+   --refresh-package-lock FILE    Resolve the spec transaction to FILE; do not build
++  --wau-os-package FILE          Wau OS package to install in the guest
+   --dry-run                      Print the selected immutable build plan
+ USAGE
+       exit 0
+@@ -91,6 +97,9 @@ if (( dry_run )); then
+   else
+     printf 'mode=build\n'
+   fi
++  if [[ -n $wau_os_package ]]; then
++    printf 'wau-os-package=%s\n' "$wau_os_package"
++  fi
+   exit 0
+ fi
+ 
+@@ -118,12 +127,24 @@ fi
+ 
+ mkdir -p "$output"
+ output=$(cd "$output" && pwd)
++# The Wau OS package is large and is not part of the builder repository, so it
++# is mounted read-only next to it and the build verifies it against the digest
++# recorded in the build spec.
++wau_os_mount=()
++wau_os_argument=()
++if [[ -n $wau_os_package ]]; then
++  [[ -f $wau_os_package && ! -L $wau_os_package ]] || fail "Wau OS package not found: $wau_os_package"
++  wau_os_package=$(cd "$(dirname "$wau_os_package")" && pwd)/$(basename "$wau_os_package")
++  wau_os_mount=(-v "$(dirname "$wau_os_package"):/wau-os:ro")
++  wau_os_argument=(--wau-os-package "/wau-os/$(basename "$wau_os_package")")
++fi
+ docker volume create --label dev.tryomarchy.role=guest-work "$work_volume" >/dev/null
+ docker run --rm --platform linux/amd64 --privileged \
+   -e OMARCHY_BUILDER_IMAGE_DIGEST="$builder_digest" \
+   -e OMARCHY_PACMAN_DISABLE_SANDBOX=1 \
+   -v "$repo_dir:/workspace:ro" \
++  "${wau_os_mount[@]}" \
+   -v "$output:/output" \
+   -v "$work_volume:/work" \
+   "$builder_image" \
+-  --spec "$container_spec" --output /output --work /work
++  --spec "$container_spec" --output /output --work /work "${wau_os_argument[@]}"
+diff --git a/guest/build.sh b/guest/build.sh
+index 6cdd032..d4b6786 100755
+--- a/guest/build.sh
++++ b/guest/build.sh
+@@ -10,6 +10,8 @@ Usage: guest/build.sh [options]
+   --work DIR         Persistent build/cache directory (default: guest/.work)
+   --spec FILE        Architecture build spec (default: guest/spec.json)
+   --source DIR       Use an existing clean pinned Omarchy checkout
++  --wau-os-package FILE
++                     Wau OS package to install in the guest (Arch package file)
+   --keep-rootfs      Keep the staged package root after a successful build
+ 
+ Run as root on the architecture selected by the spec, or use the matching
+@@ -28,6 +30,7 @@ output="$repo_dir/dist/guest"
+ work="$guest_dir/.work"
+ source_dir=""
+ spec="$guest_dir/spec.json"
++wau_os_package=""
+ keep_rootfs=0
+ 
+ while (($#)); do
+@@ -48,6 +51,10 @@ while (($#)); do
+       spec=${2:-}
+       shift 2
+       ;;
++    --wau-os-package)
++      wau_os_package=${2:-}
++      shift 2
++      ;;
+     --keep-rootfs)
+       keep_rootfs=1
+       shift
+@@ -73,6 +80,10 @@ package_lock_file="$guest_dir/$package_lock_file"
+ [[ $(uname -m) == "$architecture" ]] || fail "guest packages for $architecture must be assembled on $architecture"
+ [[ -f $packages_file ]] || fail "package list not found: $packages_file"
+ [[ -f $package_lock_file ]] || fail "package lock not found: $package_lock_file"
++if [[ -n $wau_os_package ]]; then
++  [[ -f $wau_os_package && ! -L $wau_os_package ]] || fail "Wau OS package not found: $wau_os_package"
++  wau_os_package=$(cd "$(dirname "$wau_os_package")" && pwd)/$(basename "$wau_os_package")
++fi
+ (( EUID == 0 )) || fail "run as root (pacstrap and arch-chroot require it)"
+ for command in pacstrap arch-chroot curl git gzip python3 mke2fs repo-add sha256sum zstd; do
+   command -v "$command" >/dev/null || fail "$command is required; use the supplied Arch builder container"
+@@ -236,6 +247,10 @@ for path in sorted({target["path"] for patch in spec["authenticity"]["backports"
+         print(path)
+ QML
+ )
++# Wau OS is not an upstream backport: it adds its own first-run step and the
++# script it calls to the staged Omarchy runtime, before that runtime is
++# packaged into the guest's own package.
++"$guest_dir/scripts/apply-wau-os-overlay.sh" --root "$root" --spec "$spec"
+ "$guest_dir/scripts/configure-rootfs.sh" --root "$root" --spec "$spec"
+ # Generate authentication using the pinned upstream installer, before packaging.
+ arch-chroot "$root" /usr/bin/omarchy-apply-lock
+@@ -254,6 +269,14 @@ printf '%s\n' etc/pam.d/omarchy-lock-password >>"$root/usr/share/try-omarchy/run
+   --work "$work" \
+   --spec "$spec" \
+   --pacman-config "$pacman_config"
++if [[ -n $wau_os_package ]]; then
++  "$guest_dir/scripts/register-wau-os.sh" \
++    --root "$root" \
++    --work "$work" \
++    --spec "$spec" \
++    --pacman-config "$pacman_config" \
++    --package "$wau_os_package"
++fi
+ "$guest_dir/scripts/register-local-repository.sh" --root "$root" --spec "$spec"
+ arch-chroot "$root" /usr/local/lib/try-omarchy/finalize-rootfs
+ arch-chroot "$root" pacman -Q | LC_ALL=C sort >"$root/usr/share/try-omarchy/packages.lock.txt"
+diff --git a/guest/packages.txt b/guest/packages.txt
+index 2424088..3778357 100644
+--- a/guest/packages.txt
++++ b/guest/packages.txt
+@@ -51,6 +51,7 @@ mpv
+ nautilus
+ neovim
+ networkmanager
++niri
+ noto-fonts
+ noto-fonts-cjk
+ noto-fonts-emoji
+@@ -82,6 +83,8 @@ starship
+ sudo
+ systemd
+ systemd-resolvconf
++swaybg
++swaylock
+ tensaku
+ tesseract
+ tesseract-data-eng
+diff --git a/guest/scripts/apply-wau-os-overlay.sh b/guest/scripts/apply-wau-os-overlay.sh
+new file mode 100755
+index 0000000..b203b06
+--- /dev/null
++++ b/guest/scripts/apply-wau-os-overlay.sh
+@@ -0,0 +1,132 @@
++#!/bin/bash
++
++set -euo pipefail
++
++usage() {
++  cat <<'USAGE'
++Usage: apply-wau-os-overlay.sh --root ROOT --spec SPEC
++
++Applies the reviewed Wau OS overlay to the staged, already-verified Omarchy
++runtime. Every file in the overlay manifest carries the digest of the staged
++upstream file it replaces, so the overlay can only ever be applied to the
++pinned Omarchy revision it was reviewed against.
++USAGE
++}
++
++fail() {
++  echo "apply-wau-os-overlay: $*" >&2
++  exit 1
++}
++
++root=""
++spec=""
++
++while (($#)); do
++  case "$1" in
++    --root)
++      root=${2:-}
++      shift 2
++      ;;
++    --spec)
++      spec=${2:-}
++      shift 2
++      ;;
++    -h|--help)
++      usage
++      exit 0
++      ;;
++    *)
++      fail "unknown option: $1"
++      ;;
++  esac
++done
++
++[[ $root == /* && -d $root ]] || fail "--root must be an absolute staged root"
++case "$root" in
++  /|/bin|/boot|/etc|/home|/opt|/root|/usr|/var)
++    fail "refusing unsafe root: $root"
++    ;;
++esac
++[[ -f $spec ]] || fail "spec not found: $spec"
++spec=$(cd "$(dirname "$spec")" && pwd)/$(basename "$spec")
++spec_dir=$(dirname "$spec")
++
++overlay_state=$(python3 -c '
++import json, sys
++spec = json.load(open(sys.argv[1]))
++overlay = spec.get("wauOs")
++if not overlay:
++    print("disabled")
++else:
++    print("enabled")
++    print(overlay["overlayManifest"])
++' "$spec") || fail "could not read the Wau OS overlay manifest from the spec"
++mapfile -t overlay_fields <<<"$overlay_state"
++[[ ${overlay_fields[0]:-} == disabled ]] && exit 0
++[[ ${overlay_fields[0]:-} == enabled ]] || fail "invalid Wau OS overlay state"
++(( ${#overlay_fields[@]} == 2 )) || fail "the Wau OS overlay manifest path is missing from the spec"
++manifest=${overlay_fields[1]}
++for command in install python3 sha256sum; do
++  command -v "$command" >/dev/null || fail "$command is required"
++done
++[[ $manifest != /* && $manifest != *..* ]] || fail "unsafe Wau OS overlay manifest path: $manifest"
++manifest_file="$spec_dir/$manifest"
++[[ -f $manifest_file ]] || fail "Wau OS overlay manifest not found: $manifest_file"
++
++applied=0
++while IFS=$'\t' read -r target source mode digest base; do
++  [[ -n $target && -n $source && -n $mode && -n $digest ]] || fail "incomplete Wau OS overlay entry"
++  [[ $target != /* && $target != *..* ]] || fail "unsafe Wau OS overlay target: $target"
++  [[ $source != /* && $source != *..* ]] || fail "unsafe Wau OS overlay source: $source"
++  [[ $mode =~ ^[0-7]{4}$ ]] || fail "invalid Wau OS overlay mode: $mode"
++
++  source_file="$spec_dir/$source"
++  [[ -f $source_file && ! -L $source_file ]] || fail "Wau OS overlay source is not a regular file: $source"
++  actual=$(sha256sum "$source_file" | cut -d' ' -f1)
++  [[ $actual == "$digest" ]] || fail "Wau OS overlay source digest mismatch: $source"
++
++  target_file="$root/$target"
++  if [[ -n $base ]]; then
++    [[ $base =~ ^[0-9a-f]{64}$ ]] || fail "invalid Wau OS overlay base digest: $target"
++    [[ -f $target_file && ! -L $target_file ]] || fail "Wau OS overlay target is missing: $target"
++    current=$(sha256sum "$target_file" | cut -d' ' -f1)
++    if [[ $current == "$digest" ]]; then
++      continue
++    fi
++    [[ $current == "$base" ]] ||
++      fail "Wau OS overlay target changed since it was reviewed: $target"
++  else
++    if [[ -e $target_file ]]; then
++      current=$(sha256sum "$target_file" | cut -d' ' -f1)
++      [[ $current == "$digest" ]] && continue
++      fail "Wau OS overlay target already exists: $target"
++    fi
++  fi
++
++  install -D -m "$mode" "$source_file" "$target_file"
++  installed=$(sha256sum "$target_file" | cut -d' ' -f1)
++  [[ $installed == "$digest" ]] || fail "Wau OS overlay digest mismatch after install: $target"
++  applied=$((applied + 1))
++done < <(python3 - "$manifest_file" <<'PY'
++import json
++import sys
++
++manifest = json.load(open(sys.argv[1]))
++if manifest.get("schemaVersion") != 1:
++    raise SystemExit("unsupported Wau OS overlay manifest schema")
++for entry in manifest.get("files", []):
++    print(
++        "\t".join(
++            [
++                str(entry["target"]),
++                str(entry["source"]),
++                str(entry["mode"]),
++                str(entry["sha256"]),
++                str(entry.get("baseSha256", "")),
++            ]
++        )
++    )
++PY
++)
++
++echo "Applied $applied Wau OS overlay file(s) to the staged Omarchy runtime"
+diff --git a/guest/scripts/register-local-repository.sh b/guest/scripts/register-local-repository.sh
+index d716ef6..8aa463c 100755
+--- a/guest/scripts/register-local-repository.sh
++++ b/guest/scripts/register-local-repository.sh
+@@ -67,13 +67,21 @@ repo_dir="$root/usr/share/try-omarchy/repo"
+ shopt -s nullglob
+ archives=("$repo_dir"/*.pkg.tar.zst)
+ shopt -u nullglob
+-expected_names_text=$(python3 - "$spec" <<'PY_NAMES'
+-import json, sys
++expected_names_text=$(python3 - "$spec" "$root" <<'PY_NAMES'
++import json, os, sys
+ spec = json.load(open(sys.argv[1]))
++root = sys.argv[2]
+ print("try-omarchy-runtime")
+ print("try-omarchy-mise")
+ if "aquamarine" in spec.get("supplyChain", {}):
+     print("aquamarine")
++# The Wau OS package is only part of the image when the build installed it.
++marker = os.path.join(root, "usr/share/try-omarchy/wau-os-package")
++if os.path.isfile(marker):
++    with open(marker, encoding="utf-8") as handle:
++        name = handle.read().split()
++    if name:
++        print(name[0])
+ PY_NAMES
+ )
+ mapfile -t expected_names <<<"$expected_names_text"
+diff --git a/guest/scripts/register-wau-os.sh b/guest/scripts/register-wau-os.sh
+new file mode 100755
+index 0000000..ca008bc
+--- /dev/null
++++ b/guest/scripts/register-wau-os.sh
+@@ -0,0 +1,155 @@
++#!/bin/bash
++
++set -euo pipefail
++
++usage() {
++  cat <<'USAGE'
++Usage: register-wau-os.sh --root ROOT --work WORK --spec SPEC --pacman-config CONFIG --package FILE
++
++Installs the reviewed Wau OS package into the staged root and keeps an
++immutable copy in the guest's local repository. The package is verified against
++the digest recorded in the build spec, and every dependency it declares must
++already be part of the guest's locked transaction: the build never resolves an
++unreviewed package from a live repository.
++USAGE
++}
++
++fail() {
++  echo "register-wau-os: $*" >&2
++  exit 1
++}
++
++root=""
++work=""
++spec=""
++pacman_config=""
++package=""
++
++while (($#)); do
++  case "$1" in
++    --root)
++      root=${2:-}
++      shift 2
++      ;;
++    --work)
++      work=${2:-}
++      shift 2
++      ;;
++    --spec)
++      spec=${2:-}
++      shift 2
++      ;;
++    --pacman-config)
++      pacman_config=${2:-}
++      shift 2
++      ;;
++    --package)
++      package=${2:-}
++      shift 2
++      ;;
++    -h|--help)
++      usage
++      exit 0
++      ;;
++    *)
++      fail "unknown option: $1"
++      ;;
++  esac
++done
++
++[[ $root == /* && -d $root ]] || fail "--root must be an absolute staged root"
++case "$root" in
++  /|/bin|/boot|/etc|/home|/opt|/root|/usr|/var)
++    fail "refusing unsafe root: $root"
++    ;;
++esac
++[[ $work == /* && -d $work ]] || fail "--work must be an absolute directory"
++[[ -f $spec ]] || fail "spec not found: $spec"
++[[ -f $pacman_config ]] || fail "pacman config not found: $pacman_config"
++[[ -n $package ]] || fail "--package is required"
++
++mapfile -t metadata < <(python3 - "$spec" <<'PY'
++import json
++import pathlib
++import sys
++
++spec = json.loads(pathlib.Path(sys.argv[1]).read_text())
++wau_os = spec.get("wauOs")
++if not wau_os:
++    print("disabled")
++    raise SystemExit
++print("enabled")
++for key in ("packageName", "packageVersion", "packageSha256"):
++    print(wau_os[key])
++PY
++) || fail "could not read the Wau OS package metadata from the spec"
++[[ ${metadata[0]:-} == disabled ]] && exit 0
++[[ ${metadata[0]:-} == enabled ]] || fail "invalid Wau OS package state"
++(( ${#metadata[@]} == 4 )) || fail "the Wau OS package metadata is incomplete"
++package_name=${metadata[1]}
++package_version=${metadata[2]}
++package_sha256=${metadata[3]}
++
++[[ $package_name =~ ^[a-z0-9@._+-]+$ ]] || fail "unsafe Wau OS package name: $package_name"
++[[ $package_version =~ ^[A-Za-z0-9._+:-]+$ ]] || fail "unsafe Wau OS package version: $package_version"
++[[ $package_sha256 =~ ^[0-9a-f]{64}$ ]] || fail "invalid Wau OS package digest"
++
++[[ -f $package && ! -L $package ]] || fail "Wau OS package not found: $package"
++package=$(cd "$(dirname "$package")" && pwd)/$(basename "$package")
++expected_name="$package_name-$package_version-x86_64.pkg.tar.zst"
++[[ $(basename "$package") == "$expected_name" ]] ||
++  fail "Wau OS package file does not match the pinned name: $(basename "$package")"
++
++actual_sha256=$(sha256sum "$package" | cut -d' ' -f1)
++[[ $actual_sha256 == "$package_sha256" ]] ||
++  fail "Wau OS package digest mismatch: expected $package_sha256, got $actual_sha256"
++
++for command in install pacman python3 sha256sum tar zstd; do
++  command -v "$command" >/dev/null || fail "$command is required"
++done
++
++# The package's own dependency list is the contract. Every dependency must
++# already be installed in the staged root, so the build resolves nothing from a
++# live repository and the guest's locked transaction stays complete.
++mapfile -t dependencies < <(tar --zstd -xOf "$package" .PKGINFO |
++  sed -n 's/^depend = //p' |
++  sed 's/[<>=].*$//' |
++  LC_ALL=C sort -u)
++(( ${#dependencies[@]} > 0 )) || fail "the Wau OS package declares no dependencies"
++missing=()
++for dependency in "${dependencies[@]}"; do
++  [[ -n $dependency ]] || continue
++  if ! pacman --config "$pacman_config" --root "$root" --dbpath "$root/var/lib/pacman" \
++    -Q "$dependency" >/dev/null 2>&1; then
++    missing+=("$dependency")
++  fi
++done
++if ((${#missing[@]})); then
++  fail "the Wau OS package needs packages that are not in the guest transaction: ${missing[*]}; add them to packages.txt and refresh the package lock"
++fi
++
++# The package ships a post-install message and nothing else. Skip the
++# scriptlets anyway: they run against the build host, not the staged root.
++pacman \
++  --noconfirm \
++  --noscriptlet \
++  --config "$pacman_config" \
++  --root "$root" \
++  --dbpath "$root/var/lib/pacman" \
++  --logfile "$root/var/log/pacman.log" \
++  -U "$package"
++
++query=$(pacman --config "$pacman_config" --root "$root" --dbpath "$root/var/lib/pacman" -Q "$package_name")
++[[ $query == "$package_name $package_version" ]] || fail "installed Wau OS package reports: $query"
++pacman --config "$pacman_config" --root "$root" --dbpath "$root/var/lib/pacman" -Qkk "$package_name" >/dev/null ||
++  fail "the installed Wau OS package failed its ownership check"
++pacman --config "$pacman_config" --root "$root" --dbpath "$root/var/lib/pacman" -T "${dependencies[@]}" >/dev/null ||
++  fail "the installed Wau OS package does not satisfy its dependencies"
++
++repo_dir="$root/usr/share/try-omarchy/repo"
++install -d -m 0755 "$repo_dir"
++install -m 0644 "$package" "$repo_dir/$(basename "$package")"
++# The local repository is sealed against an exact package set. Record that the
++# Wau OS package is part of this image, so the seal expects it.
++printf '%s %s\n' "$package_name" "$package_version" >"$root/usr/share/try-omarchy/wau-os-package"
++echo "Registered $query from the verified Wau OS package $package_sha256"
+diff --git a/guest/spec.json b/guest/spec.json
+index 5e6be7c..bb98731 100644
+--- a/guest/spec.json
++++ b/guest/spec.json
+@@ -82,6 +82,12 @@
+       "builderSha256": "6605eb6f71e9672be36d5c2352801d147b0ddc475f90d19d1fff352a1bb5600d"
+     }
+   },
++  "wauOs": {
++    "packageName": "herald-os-bin",
++    "packageVersion": "0.1.0alpha.5-1",
++    "packageSha256": "cbd65643346734d6a36668988c6c977b6dab3195d6c6952be3506ba9f44e9109",
++    "overlayManifest": "wau-os/overlay-manifest.json"
++  },
+   "themes": [
+     "catppuccin",
+     "catppuccin-latte",
+diff --git a/guest/tests/test_wau_os.py b/guest/tests/test_wau_os.py
+new file mode 100644
+index 0000000..ba928e8
+--- /dev/null
++++ b/guest/tests/test_wau_os.py
+@@ -0,0 +1,221 @@
++from __future__ import annotations
++
++import hashlib
++import json
++import subprocess
++import tempfile
++import unittest
++from pathlib import Path
++
++
++GUEST = Path(__file__).resolve().parents[1]
++OVERLAY_SCRIPT = GUEST / "scripts/apply-wau-os-overlay.sh"
++REGISTER_SCRIPT = GUEST / "scripts/register-wau-os.sh"
++
++
++def digest(payload: bytes) -> str:
++    return hashlib.sha256(payload).hexdigest()
++
++
++class ApplyWauOsOverlayTests(unittest.TestCase):
++    base = b"base\n"
++    replacement = b"replacement\n"
++    addition = b"added\n"
++
++    def fixture(self, temporary: str) -> tuple[Path, Path, Path]:
++        base = Path(temporary)
++        root = base / "root"
++        target = root / "usr/bin/omarchy-provision-first-run"
++        target.parent.mkdir(parents=True)
++        target.write_bytes(self.base)
++        source = base / "overlay/usr/bin/omarchy-provision-first-run"
++        source.parent.mkdir(parents=True)
++        source.write_bytes(self.replacement)
++        added_source = base / "overlay/usr/share/omarchy/install/user/first-run/wau-os-first-run.sh"
++        added_source.parent.mkdir(parents=True)
++        added_source.write_bytes(self.addition)
++        manifest = base / "overlay-manifest.json"
++        manifest.write_text(
++            json.dumps(
++                {
++                    "schemaVersion": 1,
++                    "files": [
++                        {
++                            "target": "usr/bin/omarchy-provision-first-run",
++                            "source": "overlay/usr/bin/omarchy-provision-first-run",
++                            "mode": "0755",
++                            "sha256": digest(self.replacement),
++                            "baseSha256": digest(self.base),
++                        },
++                        {
++                            "target": "usr/share/omarchy/install/user/first-run/wau-os-first-run.sh",
++                            "source": "overlay/usr/share/omarchy/install/user/first-run/wau-os-first-run.sh",
++                            "mode": "0755",
++                            "sha256": digest(self.addition),
++                        },
++                    ],
++                },
++                indent=2,
++            )
++        )
++        spec = base / "spec.json"
++        spec.write_text(
++            json.dumps(
++                {
++                    "wauOs": {
++                        "packageName": "herald-os-bin",
++                        "packageVersion": "0.1.0alpha.5-1",
++                        "packageSha256": digest(b"package"),
++                        "overlayManifest": "overlay-manifest.json",
++                    }
++                },
++                indent=2,
++            )
++        )
++        return root, spec, target
++
++    def apply(self, root: Path, spec: Path) -> subprocess.CompletedProcess:
++        return subprocess.run(
++            ["bash", str(OVERLAY_SCRIPT), "--root", str(root), "--spec", str(spec)],
++            text=True,
++            capture_output=True,
++            check=False,
++        )
++
++    def test_overlay_replaces_a_reviewed_file_and_adds_a_new_one(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            root, spec, target = self.fixture(temporary)
++            result = self.apply(root, spec)
++            self.assertEqual(result.returncode, 0, result.stderr)
++            self.assertEqual(target.read_bytes(), self.replacement)
++            added = root / "usr/share/omarchy/install/user/first-run/wau-os-first-run.sh"
++            self.assertEqual(added.read_bytes(), self.addition)
++            self.assertTrue(added.stat().st_mode & 0o111, "the added script must be executable")
++
++    def test_overlay_is_idempotent(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            root, spec, target = self.fixture(temporary)
++            self.assertEqual(self.apply(root, spec).returncode, 0)
++            second = self.apply(root, spec)
++            self.assertEqual(second.returncode, 0, second.stderr)
++            self.assertIn("Applied 0 Wau OS overlay file(s)", second.stdout)
++            self.assertEqual(target.read_bytes(), self.replacement)
++
++    def test_overlay_refuses_a_target_that_changed_since_it_was_reviewed(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            root, spec, target = self.fixture(temporary)
++            target.write_bytes(b"somebody else changed this\n")
++            result = self.apply(root, spec)
++            self.assertNotEqual(result.returncode, 0)
++            self.assertIn("changed since it was reviewed", result.stderr)
++            self.assertEqual(target.read_bytes(), b"somebody else changed this\n")
++
++    def test_overlay_refuses_to_replace_a_file_it_did_not_review(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            root, spec, target = self.fixture(temporary)
++            manifest = spec.parent / "overlay-manifest.json"
++            payload = json.loads(manifest.read_text())
++            del payload["files"][0]["baseSha256"]
++            manifest.write_text(json.dumps(payload, indent=2))
++            result = self.apply(root, spec)
++            self.assertNotEqual(result.returncode, 0)
++            self.assertIn("already exists", result.stderr)
++            self.assertEqual(target.read_bytes(), self.base)
++
++    def test_overlay_refuses_a_source_that_does_not_match_its_digest(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            root, spec, target = self.fixture(temporary)
++            source = spec.parent / "overlay/usr/bin/omarchy-provision-first-run"
++            source.write_bytes(b"tampered\n")
++            result = self.apply(root, spec)
++            self.assertNotEqual(result.returncode, 0)
++            self.assertIn("source digest mismatch", result.stderr)
++
++    def test_overlay_is_skipped_without_a_wau_os_block_in_the_spec(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            root, spec, target = self.fixture(temporary)
++            spec.write_text(json.dumps({"schemaVersion": 1}, indent=2))
++            result = self.apply(root, spec)
++            self.assertEqual(result.returncode, 0, result.stderr)
++            self.assertEqual(target.read_bytes(), self.base)
++
++
++class RegisterWauOsTests(unittest.TestCase):
++    def test_registration_is_skipped_without_a_wau_os_block_in_the_spec(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            base = Path(temporary)
++            root = base / "root"
++            root.mkdir()
++            spec = base / "spec.json"
++            spec.write_text(json.dumps({"schemaVersion": 1}, indent=2))
++            config = base / "pacman.conf"
++            config.write_text("[options]\n")
++            result = subprocess.run(
++                [
++                    "bash",
++                    str(REGISTER_SCRIPT),
++                    "--root",
++                    str(root),
++                    "--work",
++                    str(base),
++                    "--spec",
++                    str(spec),
++                    "--pacman-config",
++                    str(config),
++                    "--package",
++                    str(base / "herald-os-bin-0.1.0alpha.5-1-x86_64.pkg.tar.zst"),
++                ],
++                text=True,
++                capture_output=True,
++                check=False,
++            )
++            self.assertEqual(result.returncode, 0, result.stderr)
++
++    def test_registration_refuses_a_package_that_does_not_match_the_pinned_digest(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            base = Path(temporary)
++            root = base / "root"
++            root.mkdir()
++            package = base / "herald-os-bin-0.1.0alpha.5-1-x86_64.pkg.tar.zst"
++            package.write_bytes(b"not the reviewed package")
++            spec = base / "spec.json"
++            spec.write_text(
++                json.dumps(
++                    {
++                        "wauOs": {
++                            "packageName": "herald-os-bin",
++                            "packageVersion": "0.1.0alpha.5-1",
++                            "packageSha256": digest(b"the reviewed package"),
++                            "overlayManifest": "overlay-manifest.json",
++                        }
++                    },
++                    indent=2,
++                )
++            )
++            config = base / "pacman.conf"
++            config.write_text("[options]\n")
++            result = subprocess.run(
++                [
++                    "bash",
++                    str(REGISTER_SCRIPT),
++                    "--root",
++                    str(root),
++                    "--work",
++                    str(base),
++                    "--spec",
++                    str(spec),
++                    "--pacman-config",
++                    str(config),
++                    "--package",
++                    str(package),
++                ],
++                text=True,
++                capture_output=True,
++                check=False,
++            )
++            self.assertNotEqual(result.returncode, 0)
++            self.assertIn("package digest mismatch", result.stderr)
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/guest/tests/verify.py b/guest/tests/verify.py
+index 1637379..bdeebda 100755
+--- a/guest/tests/verify.py
++++ b/guest/tests/verify.py
+@@ -174,6 +174,56 @@ def main() -> None:
+         < build.index("configure-rootfs.sh"),
+         "reviewed Omarchy backports apply only to the verified staged source",
+     )
++    wau_os = spec.get("wauOs")
++    check(
++        isinstance(wau_os, dict)
++        and wau_os.get("packageName") == "herald-os-bin"
++        and len(wau_os.get("packageSha256", "")) == 64
++        and not set(wau_os.get("packageSha256", "")) - set("0123456789abcdef"),
++        "the Wau OS package is pinned by digest",
++    )
++    overlay_manifest = GUEST / wau_os["overlayManifest"]
++    check(overlay_manifest.is_file(), "the Wau OS overlay manifest exists")
++    overlay = json_file(overlay_manifest)
++    check(overlay.get("schemaVersion") == 1, "the Wau OS overlay manifest schema is supported")
++    for entry in overlay.get("files", []):
++        source = GUEST / entry["source"]
++        check(source.is_file(), f"Wau OS overlay source exists: {entry['source']}")
++        check(
++            hashlib.sha256(source.read_bytes()).hexdigest() == entry["sha256"],
++            f"Wau OS overlay source digest matches: {entry['source']}",
++        )
++        check(
++            entry.get("baseSha256", "") == "" or len(entry["baseSha256"]) == 64,
++            f"Wau OS overlay base digest is pinned: {entry['target']}",
++        )
++    check(
++        "apply-wau-os-overlay.sh" in build
++        and build.index("materialize-omarchy.sh")
++        < build.index("apply-wau-os-overlay.sh")
++        < build.index("configure-rootfs.sh"),
++        "the Wau OS overlay applies to the staged runtime before it is packaged",
++    )
++    check(
++        "register-wau-os.sh" in build
++        and build.index("register-pinned-mise.sh")
++        < build.index("register-wau-os.sh")
++        < build.index("register-local-repository.sh"),
++        "the Wau OS package is registered before the local repository is sealed",
++    )
++    check(
++        "--wau-os-package" in container and "/wau-os" in container,
++        "the container mounts the Wau OS package next to the builder",
++    )
++    check(
++        "wau-os-package" in read(GUEST / "scripts/register-local-repository.sh")
++        and "wau-os-package" in read(GUEST / "scripts/register-wau-os.sh"),
++        "the local repository expects the Wau OS package when the build installed it",
++    )
++    check(
++        {"niri", "swaybg", "swaylock"} <= set(package_lock["packages"]),
++        "the guest transaction carries the Wau OS session dependencies (refresh the package lock)",
++    )
+     provenance_writer = read(GUEST / "scripts/write-provenance.py")
+     check(
+         "backportedRuntimeTrees" in provenance_writer
+diff --git a/guest/wau-os/overlay-manifest.json b/guest/wau-os/overlay-manifest.json
+new file mode 100644
+index 0000000..303016f
+--- /dev/null
++++ b/guest/wau-os/overlay-manifest.json
+@@ -0,0 +1,19 @@
++{
++  "schemaVersion": 1,
++  "description": "Wau OS additions to the pinned Omarchy runtime. These are Wau OS's own changes to the guest, not upstream backports: the first-run step that calls the Wau OS setup script, and the setup script itself.",
++  "files": [
++    {
++      "target": "usr/bin/omarchy-provision-first-run",
++      "source": "wau-os/overlay/usr/bin/omarchy-provision-first-run",
++      "mode": "0755",
++      "sha256": "c660da9b8f6171bb92e9e52575275d2dd790fca391551540533fa2bc359d0856",
++      "baseSha256": "81eee6a7237b3fa3a7da0fb62bebaed88d4dc722eadf4daac8125a9706bcfc6f"
++    },
++    {
++      "target": "usr/share/omarchy/install/user/first-run/wau-os-first-run.sh",
++      "source": "wau-os/overlay/usr/share/omarchy/install/user/first-run/wau-os-first-run.sh",
++      "mode": "0755",
++      "sha256": "90da112c25ed1da92754706d578ef31124a540e24a71892cc73932df4500d217"
++    }
++  ]
++}
+diff --git a/guest/wau-os/overlay/usr/bin/omarchy-provision-first-run b/guest/wau-os/overlay/usr/bin/omarchy-provision-first-run
+new file mode 100755
+index 0000000..6a6c5e1
+--- /dev/null
++++ b/guest/wau-os/overlay/usr/bin/omarchy-provision-first-run
+@@ -0,0 +1,102 @@
++#!/bin/bash
++
++# omarchy:summary=Finish first-login setup for Omarchy.
++# omarchy:args=[--force]
++# omarchy:hidden=true
++
++set -e
++
++usage() {
++  cat <<USAGE
++Usage: omarchy-provision-first-run [--force]
++
++Run first-login user setup and notification hooks. By default this only runs
++once per user. Use --force to rerun the full sequence and refresh user setup.
++USAGE
++}
++
++force=0
++finalize_user_args=()
++while (($#)); do
++  case "$1" in
++    --force)
++      force=1
++      finalize_user_args+=(--force)
++      shift
++      ;;
++    -h|--help)
++      usage
++      exit 0
++      ;;
++    *)
++      echo "Unknown option: $1" >&2
++      usage >&2
++      exit 1
++      ;;
++  esac
++done
++
++state_dir=~/.local/state/omarchy
++FIRST_RUN_DONE="first-run-user"
++if omarchy-done check "$FIRST_RUN_DONE" && (( force == 0 )); then
++  echo "First-run already complete (rerun with --force to refresh)."
++  exit 0
++fi
++
++omarchy-provision-user "${finalize_user_args[@]}" || true
++
++mkdir -p "$state_dir"
++
++FIRST_RUN_LOG="$state_dir/first-run.log"
++first_run_failed=0
++
++log_first_run() {
++  printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >>"$FIRST_RUN_LOG"
++}
++
++run_first_run_step() {
++  local name="$1"
++  shift
++
++  log_first_run "Starting: $name"
++  if "$@"; then
++    log_first_run "Completed: $name"
++  else
++    local status=$?
++    first_run_failed=1
++    log_first_run "Failed: $name (exit code: $status)"
++  fi
++}
++
++run_first_run_step "install Voxtype post-update hook" \
++  omarchy-hook-install post-update "$OMARCHY_PATH/install/user/first-run/install-voxtype.hook"
++run_first_run_step "install fingerprint setup post-update hook" \
++  omarchy-hook-install post-update "$OMARCHY_PATH/install/user/first-run/setup-fingerprint.hook"
++run_first_run_step "install agent setup post-update hook" \
++  omarchy-hook-install post-update "$OMARCHY_PATH/install/user/first-run/setup-agent.hook"
++
++run_first_run_step "enable user systemd units" \
++  bash "$OMARCHY_PATH/install/user/first-run/enable-user-units.sh"
++run_first_run_step "set GNOME theme" \
++  bash "$OMARCHY_PATH/install/user/first-run/gnome-theme.sh"
++run_first_run_step "set GTK primary paste" \
++  bash "$OMARCHY_PATH/install/user/first-run/gtk-primary-paste.sh"
++run_first_run_step "apply speaker tuning" \
++  bash "$OMARCHY_PATH/install/user/first-run/audio-tuning.sh"
++# Wau OS is optional on this machine, so its script says so and exits when it is not installed.
++run_first_run_step "set up Wau OS" \
++  bash "$OMARCHY_PATH/install/user/first-run/wau-os-first-run.sh"
++
++omarchy-notification-wait || log_first_run "Timed out waiting for notification service; continuing"
++# Each send returns only once the server has taken the toast, so sending in
++# order is enough to stack them newest-on-top.
++run_first_run_step "show welcome notification" \
++  bash "$OMARCHY_PATH/install/user/first-run/welcome.sh"
++run_first_run_step "schedule Wi-Fi/update notifications" \
++  bash "$OMARCHY_PATH/install/user/first-run/wifi.sh"
++
++if (( first_run_failed == 0 )); then
++  omarchy-done mark "$FIRST_RUN_DONE"
++else
++  log_first_run "One or more first-run steps failed; first-run will retry next login"
++fi
+diff --git a/guest/wau-os/overlay/usr/share/omarchy/install/user/first-run/wau-os-first-run.sh b/guest/wau-os/overlay/usr/share/omarchy/install/user/first-run/wau-os-first-run.sh
+new file mode 100755
+index 0000000..3431941
+--- /dev/null
++++ b/guest/wau-os/overlay/usr/share/omarchy/install/user/first-run/wau-os-first-run.sh
+@@ -0,0 +1,48 @@
++#!/bin/bash
++
++# Wau OS inside Omarchy: the app, its menu entry, its theme hook, its keys, and the autostart
++# entry that opens it with the session.
++#
++# Every step is idempotent, and every step is optional: a machine without Wau OS installed skips
++# this whole script, and a step that fails leaves the rest of the first-run alone. The first-run
++# runner logs what happened either way.
++#
++# Nothing here starts a service that outlives the session. The Wau OS app starts and owns its own
++# Hermes backend, so it is ready the moment it opens. A Hermes gateway that runs in the
++# background (for a messaging bot, say) is the person's own call:
++# hermes gateway install --start-now --start-on-login
++
++set -uo pipefail
++
++if ! command -v herald-os >/dev/null 2>&1; then
++  echo "Wau OS is not installed on this machine; nothing to set up."
++  exit 0
++fi
++
++# The bridge plugin and the tools it needs: this is what lets Whis use the system. It installs
++# Hermes Agent as well when the machine has none yet (Omarchy's own Hermes Desktop runtime
++# counts, so the two never fight over ~/.hermes).
++if ! herald-os setup --yes; then
++  echo "Wau OS did not finish its setup; run herald-os setup in a terminal." >&2
++fi
++
++# The menu entry, the theme hook and the keys, so Wau OS looks and behaves like part of Omarchy
++# instead of a stranger inside it.
++if ! herald-os omarchy install; then
++  echo "Wau OS could not join the Omarchy menu; run herald-os omarchy install in a terminal." >&2
++fi
++
++# Wau OS opens with the session: the desktop entry every session reads at login. Without it a
++# login lands in Omarchy's own desktop, and Wau OS is one keypress away.
++autostart_dir="$HOME/.config/autostart"
++mkdir -p "$autostart_dir"
++cat >"$autostart_dir/wau-os.desktop" <<'DESKTOP'
++[Desktop Entry]
++Name=Wau OS
++Comment=Whis as your desktop
++Exec=herald-os omarchy start
++Icon=herald-os
++Type=Application
++Terminal=false
++StartupWMClass=herald-os
++DESKTOP
+-- 
+2.43.0
+

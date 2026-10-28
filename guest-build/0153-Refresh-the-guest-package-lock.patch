@@ -1,0 +1,77 @@
+From 8e1bf4eaa0bd6943e7c30c311c253d5a8b4bc6d8 Mon Sep 17 00:00:00 2001
+From: Try Omarchy Release <actions@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 23:02:12 +0800
+Subject: [PATCH] Refresh the guest package lock
+
+glycin 2.2.4-1 -> 2.2.5-1
+glycin-gtk4 2.2.4-1 -> 2.2.5-1
+gpu-screen-recorder 6.1.5-1 -> 6.1.6-1
+libheif 1.23.6-1 -> 1.23.7-1
+niri 26.04-1 (new)
+swaybg 1.2.2-1 (new)
+swaylock 1.8.6-1 (new)
+---
+ guest/packages.lock.json | 13 ++++++++-----
+ 1 file changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/guest/packages.lock.json b/guest/packages.lock.json
+index cdbc7f4..f480891 100644
+--- a/guest/packages.lock.json
++++ b/guest/packages.lock.json
+@@ -115,8 +115,8 @@
+     "glibc": "2.44+r50+g1848099f063e-1",
+     "glslang": "1:1.4.363.0-1",
+     "glu": "9.0.3-3",
+-    "glycin": "2.2.4-1",
+-    "glycin-gtk4": "2.2.4-1",
++    "glycin": "2.2.5-1",
++    "glycin-gtk4": "2.2.5-1",
+     "gmp": "6.3.0-3",
+     "gnome-autoar": "0.5.2-1",
+     "gnome-desktop-4": "1:51.0-1",
+@@ -130,7 +130,7 @@
+     "gpgme": "2.2.0-1",
+     "gpgmepp": "2.2.0-1",
+     "gpm": "1.20.7.r38.ge82d1a6-7",
+-    "gpu-screen-recorder": "6.1.5-1",
++    "gpu-screen-recorder": "6.1.6-1",
+     "graphene": "1.10.8-2",
+     "graphicsmagick": "1.3.49-3",
+     "graphite": "1:1.3.15-1",
+@@ -276,7 +276,7 @@
+     "libgsf": "1.14.60-1",
+     "libgudev": "238-4",
+     "libgxps": "0.3.2-5",
+-    "libheif": "1.23.6-1",
++    "libheif": "1.23.7-1",
+     "libhwasan": "16.2.1+r23+gd564253eb6c8-1",
+     "libice": "1.1.2-1",
+     "libidn": "1.44-1",
+@@ -470,6 +470,7 @@
+     "nettle": "4.0-1",
+     "networkmanager": "1.58.1-2",
+     "nftables": "1:1.1.7-3",
++    "niri": "26.04-1",
+     "noto-fonts": "1:2026.10.01-1",
+     "noto-fonts-cjk": "20240730-1",
+     "noto-fonts-emoji": "1:2.057-1",
+@@ -581,6 +582,8 @@
+     "starship": "1.27.0-1",
+     "sudo": "1.9.17.p2-6",
+     "svt-av1": "4.2.0-1",
++    "swaybg": "1.2.2-1",
++    "swaylock": "1.8.6-1",
+     "systemd": "262.1-1",
+     "systemd-libs": "262.1-1",
+     "systemd-resolvconf": "262.1-1",
+@@ -682,6 +685,6 @@
+     "zram-generator": "1.2.1-1",
+     "zstd": "1.5.7-3"
+   },
+-  "requestedFileSha256": "1db3ae20694fffa1ccf73a493a60dfac62076f73fc3db1c3b8940632d527221c",
++  "requestedFileSha256": "a82b2fe610c4af3bacd27890140b2b8507c898808a307993a679b9c6c8040e33",
+   "schemaVersion": 1
+ }
+-- 
+2.43.0
+

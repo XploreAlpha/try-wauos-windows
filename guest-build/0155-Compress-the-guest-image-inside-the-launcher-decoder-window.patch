@@ -1,0 +1,36 @@
+From a0d7acefff68b7a8a303d40b123b6c621cb94fee Mon Sep 17 00:00:00 2001
+From: Try Omarchy Release <actions@users.noreply.github.com>
+Date: Wed, 28 Oct 2026 09:42:36 +0800
+Subject: [PATCH] Compress the guest image inside the launcher's decoder window
+
+The launcher decodes the compressed rootfs with a zstd window of at most
+512 MiB, so --long=29 is the largest window it can read. The local package
+archives repeat about 310 MiB apart in the staged image, which is past the
+256 MiB window the build used, so the Wau OS package archive was stored
+three times. A 512 MiB window matches the repeats and keeps the release
+asset inside GitHub's 2 GiB per-asset limit.
+---
+ guest/scripts/pack-image.sh | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/guest/scripts/pack-image.sh b/guest/scripts/pack-image.sh
+index 6a6e2de..5ee201e 100755
+--- a/guest/scripts/pack-image.sh
++++ b/guest/scripts/pack-image.sh
+@@ -96,7 +96,12 @@ if [[ -f $root/usr/share/try-omarchy/packages.lock.txt ]]; then
+ fi
+ 
+ # Match repeated runtime payloads without exceeding the launcher decoder window.
+-zstd --force --quiet -12 --long=28 --threads=0 "$raw" -o "$compressed"
++# The launcher decodes this frame with a window of at most 512 MiB, so 29 is
++# the largest window it can read. The local package archives repeat about
++# 310 MiB apart in the staged image, which is past a 256 MiB window: they were
++# stored three times. A 512 MiB window matches them and keeps the release
++# asset inside GitHub's 2 GiB per-asset limit.
++zstd --force --quiet -19 --long=29 --threads=0 "$raw" -o "$compressed"
+ python3 "$guest_dir/scripts/write-guest-manifest.py" --directory "$output" --spec "$spec"
+ 
+ (
+-- 
+2.43.0
+

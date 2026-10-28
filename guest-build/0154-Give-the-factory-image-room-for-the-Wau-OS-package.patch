@@ -1,0 +1,29 @@
+From 8ad549912da09f197532bab3fd408a7c4afc3d3b Mon Sep 17 00:00:00 2001
+From: Try Omarchy Release <actions@users@github.com>
+Date: Wed, 28 Oct 2026 08:24:31 +0800
+Subject: [PATCH] Give the factory image room for the Wau OS package
+
+The Wau OS package and its compositor dependencies grow the staged root to
+6.9 GiB, past the 85% fill limit of the 8192 MiB image. New disks are still
+expanded to their full size when they are created, so this only changes the
+factory image.
+---
+ guest/spec.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/guest/spec.json b/guest/spec.json
+index bb98731..f0fc6d0 100644
+--- a/guest/spec.json
++++ b/guest/spec.json
+@@ -5,7 +5,7 @@
+     "filesystem": "ext4",
+     "filesystemLabel": "omarchy-factory",
+     "filesystemUuid": "89054943-1f4e-4f14-b934-d6db3fba4254",
+-    "sizeMiB": 8192,
++    "sizeMiB": 10240,
+     "sourceDateEpoch": 1787652758
+   },
+   "guest": {
+-- 
+2.43.0
+

@@ -1,0 +1,55 @@
+From 0b705b9c3c4a2a40fe04c7209069ee9281d33c99 Mon Sep 17 00:00:00 2001
+From: Try Omarchy Release <actions@users.noreply.github.com>
+Date: Wed, 28 Oct 2026 09:45:44 +0800
+Subject: [PATCH] Refresh the guest package lock
+
+Arch published new versions of these packages while the Wau OS guest was
+being assembled, and the resolved transaction no longer matched the
+reviewed lock.
+---
+ guest/packages.lock.json | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/guest/packages.lock.json b/guest/packages.lock.json
+index f480891..ac3cffa 100644
+--- a/guest/packages.lock.json
++++ b/guest/packages.lock.json
+@@ -37,7 +37,7 @@
+     "ca-certificates-mozilla": "3.132-1",
+     "ca-certificates-utils": "20240618-1",
+     "cairo": "1.18.6-1",
+-    "chromium": "156.0.8078.47-1",
++    "chromium": "156.0.8078.73-1",
+     "clang": "23.1.4-1",
+     "clang-libs": "23.1.4-1",
+     "cmake": "4.4.4-1",
+@@ -159,7 +159,7 @@
+     "gupnp-igd": "1.6.0-2",
+     "gvfs": "1.62.0-3",
+     "gzip": "1.15-1",
+-    "harfbuzz": "14.6.0-1",
++    "harfbuzz": "15.0.0-1",
+     "herdr": "0.9.1-2",
+     "hicolor-icon-theme": "0.18-1",
+     "hidapi": "0.15.0-1",
+@@ -510,7 +510,7 @@
+     "pcre2": "10.49-1",
+     "pcsclite": "2.5.3-1",
+     "perl": "5.44.0-1",
+-    "perl-error": "0.17030-3",
++    "perl-error": "0.17031-1",
+     "perl-mailtools": "2.22-3",
+     "perl-timedate": "2.35-1",
+     "pinentry": "1.3.3-1",
+@@ -540,7 +540,7 @@
+     "qoi": "r350.4461cc3-1",
+     "qrencode": "4.1.1-4",
+     "qt6-base": "6.12.0-3",
+-    "qt6-declarative": "6.12.0-2",
++    "qt6-declarative": "6.12.0-3",
+     "qt6-multimedia": "6.12.0-1",
+     "qt6-multimedia-ffmpeg": "6.12.0-1",
+     "qt6-svg": "6.12.0-1",
+-- 
+2.43.0
+

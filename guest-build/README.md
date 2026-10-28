@@ -10,6 +10,92 @@ scripts/release/build-guest.sh --contract-only
 scripts/release/build-guest.sh --output /path/to/artifacts
 ```
 
+Patch 0152 ships Wau OS inside the guest. The Wau OS package is installed from
+a verified archive after the locked package transaction, never resolved from a
+live repository, so the image keeps its fully locked transaction. The guest's
+first-run setup gains a Wau OS step and the script it calls, applied to the
+pinned Omarchy runtime before that runtime is packaged. Build the image with
+the package:
+
+```bash
+scripts/release/build-guest.sh --output /path/to/artifacts \
+  --wau-os-package /path/to/herald-os-bin-0.1.0alpha.5-1-x86_64.pkg.tar.zst
+```
+
+The package's compositor dependencies (`niri`, `swaybg`, `swaylock`) are part
+of the transaction, so the reviewed package lock has to be resolved again
+before the build accepts the new package list:
+
+```bash
+scripts/release/build-guest.sh --refresh-package-lock guest-build/packages.lock.json
+```
+
+That command resolves the transaction in the builder container and writes the
+result as the next patch in this directory. Review it, then build.
+
+The builder downloads every package of the transaction into a Docker volume.
+`--work-volume NAME` selects that volume, so a rebuild after a reviewed patch
+reuses the downloads instead of fetching them again:
+
+```bash
+scripts/release/build-guest.sh --output /path/to/artifacts \
+  --work-volume try-omarchy-guest-work-3458196668 \
+  --wau-os-package /path/to/herald-os-bin-0.1.0alpha.5-1-x86_64.pkg.tar.zst
+```
+
+The release workflow builds the guest on a runner that has no copy of the Wau
+OS sources, so it fetches the package from a release asset of this repository
+instead. `guest-build/wau-os.lock.json` pins that asset's URL, file name and
+digest, and `scripts/release/fetch-wau-os.sh` downloads it and verifies the
+digest before the build uses it:
+
+```bash
+scripts/release/fetch-wau-os.sh /path/to/destination
+```
+
+The digest in the lock is the same one the guest build spec records, so the
+package is rejected before it reaches the image if it changed on the wire.
+
+The build runs the container as root and hands the finished artifacts back to
+the account that started it. It reaches the Docker daemon directly instead of
+asking for `sudo`, because every account that installs Docker is already
+expected to be in the `docker` group.
+
+Patch 0154 grows the factory image to 10240 MiB. The Wau OS package and its
+compositor dependencies push the staged root past the 85% fill limit of the
+8192 MiB image. Only the factory image changes: new disks are still expanded
+to their full size when they are created.
+
+The build checks out the guest source on the host, and git derives directory
+permissions from the process umask. A permissive umask turns the guest
+overlay directories into 0775, and the build copies those modes into the
+staged rootfs, where they contradict the 0755 modes recorded in the Wau OS
+package's mtree. `scripts/release/build-guest.sh` pins the umask to 022 so the
+image is reproducible regardless of the account it runs under.
+
+Patch 0155 compresses the guest image inside the launcher's decoder window.
+The launcher reads the frame with a window of at most 512 MiB, so 29 is the
+largest window it can decode. The local package archives repeat about 310 MiB
+apart inside the staged image, which is past a 256 MiB window, so they were
+stored three times and the release asset grew past GitHub's 2 GiB per-asset
+limit. A 512 MiB window matches those repeats and keeps the asset within the
+limit. The change is compression only: the packed image holds the same
+filesystem.
+
+Patch 0156 stores each local package archive once in the factory image. The
+offer in `/usr/share/try-omarchy/update-repository` and the live local
+repository carry the same archive bytes, and the build copied them instead of
+linking them. Hard links keep the image's storage to one copy while the
+publisher still skips an archive the destination already holds with a matching
+digest, so an offer reaches a persistent disk that started from an older image.
+
+Patch 0157 refreshes the guest package lock. The Arch repositories republish
+their packages hourly, so the reviewed lock drifts from the transaction the
+builder resolves. The patch records the four changed entries
+(chromium `156.0.8078.47-1` to `156.0.8078.73-1`, harfbuzz `14.6.0-1` to
+`15.0.0-1`, perl-error `0.17030-3` to `0.17031-1` and qt6-declarative
+`6.12.0-2` to `6.12.0-3`) that the current transaction uses.
+
 Patch 0147 opens links clicked in Windows inside Omarchy, only for URL schemes
 the user approved in Try Omarchy Settings. Agent version 6 starts every
 connection with links disabled. Each `url-approved` snapshot from the launcher

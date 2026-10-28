@@ -63,7 +63,10 @@ jobs:
 
       - name: Check runner capacity
         run: |
-          test "$(df --output=avail -B1G "$RUNNER_TEMP" | tail -1)" -ge 14
+          # The Wau OS guest image is 10240 MiB, so the runner holds the staged
+          # root, the raw image, the compressed asset and the package cache at
+          # the same time. Fail before the build instead of halfway through it.
+          test "$(df --output=avail -B1G "$RUNNER_TEMP" | tail -1)" -ge 24
           test -e /dev/kvm
           sudo chmod 666 /dev/kvm
           df -h "$RUNNER_TEMP" /var/lib/docker
@@ -73,8 +76,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends qemu-system-x86
 
+      - name: Fetch the pinned Wau OS package
+        run: |
+          wau_os_package="$(scripts/release/fetch-wau-os.sh "$RUNNER_TEMP/wau-os")"
+          echo "WAU_OS_PACKAGE=$wau_os_package" >>"$GITHUB_ENV"
+
       - name: Build locked guest image
-        run: scripts/release/build-guest.sh --output "$ARTIFACT_DIR"
+        run: scripts/release/build-guest.sh --output "$ARTIFACT_DIR" --wau-os-package "$WAU_OS_PACKAGE"
 
       - name: Add and verify the locked runtime
         run: scripts/release/prepare-assets.sh "$ARTIFACT_DIR"

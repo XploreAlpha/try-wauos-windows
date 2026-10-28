@@ -1,0 +1,61 @@
+From fa699668cd8f14e35a585fd479202885d4b03d3c Mon Sep 17 00:00:00 2001
+From: Try Omarchy Release <actions@users.noreply.github.com>
+Date: Wed, 28 Oct 2026 09:45:44 +0800
+Subject: [PATCH] Store each local package archive once in the factory image
+
+The update offer and the live local repository carry the same archive
+bytes. Copying them stores every archive twice, and the compatibility
+overlay that carries the offer stores them a third time. Link the offer to
+the repository instead, so the image holds one copy of each archive. The
+publisher skips an archive the destination already holds with the same
+digest, so a persistent disk still receives the offer.
+
+The aquamarine contract test guarded the copy of the offer. It now guards
+the link and still requires every archive the local repository holds to
+reach the offer directory.
+---
+ guest/scripts/finalize-rootfs.sh        | 9 ++++++++-
+ guest/tests/test_aquamarine_contract.py | 7 ++++++-
+ 2 files changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/guest/scripts/finalize-rootfs.sh b/guest/scripts/finalize-rootfs.sh
+index 372a935..16f20d8 100755
+--- a/guest/scripts/finalize-rootfs.sh
++++ b/guest/scripts/finalize-rootfs.sh
+@@ -61,7 +61,14 @@ update-desktop-database /usr/share/applications || true
+ # stages an offer only; normal Omarchy Update remains the package transaction.
+ update_repo=/usr/share/try-omarchy/update-repository
+ install -d -m 0755 "$update_repo"
+-cp /usr/share/try-omarchy/repo/*.pkg.tar.zst "$update_repo/"
++# The offer and the live local repository carry the same archive bytes. Link
++# them instead of copying, so the image stores every archive once. The
++# publisher skips an archive the destination already holds with the same
++# digest, so the offer still reaches a persistent disk that starts from an
++# older image.
++for archive in /usr/share/try-omarchy/repo/*.pkg.tar.zst; do
++  ln -f -- "$archive" "$update_repo/$(basename -- "$archive")"
++done
+ cp /usr/share/try-omarchy/repo/try-omarchy.db.tar.gz "$update_repo/"
+ python3 - "$update_repo" <<'UPDATE_MANIFEST'
+ import hashlib, json, pathlib, subprocess, sys
+diff --git a/guest/tests/test_aquamarine_contract.py b/guest/tests/test_aquamarine_contract.py
+index 92cd926..1a64209 100644
+--- a/guest/tests/test_aquamarine_contract.py
++++ b/guest/tests/test_aquamarine_contract.py
+@@ -77,7 +77,12 @@ class AquamarineContractTests(unittest.TestCase):
+         self.assertIn('depend = aquamarine>={version}', runtime)
+         finalizer = (GUEST / 'scripts/finalize-rootfs.sh').read_text()
+         self.assertIn('compat_revision=63', finalizer)
+-        self.assertIn('cp /usr/share/try-omarchy/repo/*.pkg.tar.zst', finalizer)
++        # The offer holds every archive the local repository holds, and the
++        # image stores those bytes once: the offer links the archive instead
++        # of copying it.
++        self.assertIn('for archive in /usr/share/try-omarchy/repo/*.pkg.tar.zst', finalizer)
++        self.assertIn('ln -f -- "$archive"', finalizer)
++        self.assertIn('cp /usr/share/try-omarchy/repo/try-omarchy.db.tar.gz', finalizer)
+         self.assertIn('usr/share/try-omarchy/skel-fragments/hypr-monitors-qemu.append.lua', finalizer)
+         repo = (GUEST / 'scripts/register-local-repository.sh').read_text()
+         self.assertIn('expected_archive_count=${#expected_names[@]}', repo)
+-- 
+2.43.0
+
