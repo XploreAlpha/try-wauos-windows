@@ -10,8 +10,11 @@ func TestUninstallKeyNameIsStablePerInstall(t *testing.T) {
 	if got := uninstallKeyName(def, def); got != "TryOmarchy" {
 		t.Fatalf("default install key: %q", got)
 	}
-	a := uninstallKeyName(`E:\Wau\TryOmarchy`, def)
-	b := uninstallKeyName(`e:\omarchy\tryomarchy\`, def)
+	// The key is the hash of the whole install path, so the two alternate
+	// paths have to be the same path in a different case, with a trailing
+	// separator. They are the data folder the rebrand moved to TryWau.
+	a := uninstallKeyName(`E:\Wau\TryWau`, def)
+	b := uninstallKeyName(`e:\wau\trywau\`, def)
 	if a != b || !strings.HasPrefix(a, "TryOmarchy-") || len(a) != len("TryOmarchy-")+8 {
 		t.Fatalf("alternate install keys differ or are malformed: %q %q", a, b)
 	}
